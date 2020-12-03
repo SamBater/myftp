@@ -100,9 +100,23 @@ void reaction(int socofd, char *buff)
 
 	else if (strcmp(cmd, "put") == 0)
 	{
-		recv(socofd,buff,MAX,0);
-		saveFile("put.txt",buff);
+		//  recv(socofd,buff,MAX,0);
+
+		//  saveFile("save.txt",buff);
+		FILE *f = fopen("save.txt","w+");
+		while(1)
+		{
+			int n = recv(socofd,buff,MAX,0);
+			printf("recv %d bytes.\n",n);
+			if(n <=0 || buff[n-1] == EOF)break;
+			fprintf(f,"%s",buff);
+			fflush(stdout);
+			bzero(buff,MAX);
+		}
+		fclose(f);
+		puts("out of circle");
 		strcpy(buff,"put complete.");
+		puts("done");
 	}
 	else if (strcmp(buff, "mput") == 0)
 	{

@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #define MAX 255
+#define SIZE 1500
 typedef struct 
 {
     char * user;
@@ -66,12 +67,43 @@ void client_usage()
 	printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
 }
 
-void putFile()
-{
+void send_file(FILE *fp, int sockfd){
+  int n;
+  char data[SIZE] = {0};
 
+  while(fgets(data, SIZE, fp) != NULL) {
+    if (send(sockfd, data, sizeof(data), 0) == -1) {
+      perror("[-]Error in sending file.");
+      exit(1);
+    }
+    bzero(data, SIZE);
+  }
 }
 
-void getFile()
+void write_file(int sockfd){
+  int n;
+  FILE *fp;
+  char *filename = "recv.txt";
+  char buffer[SIZE];
+
+  fp = fopen(filename, "w");
+  while (1) {
+    n = recv(sockfd, buffer, SIZE, 0);
+	printf("recv:%d",n);
+    if (n <= 0){
+      break;
+      return;
+    }
+    fprintf(fp, "%s", buffer);
+    bzero(buffer, SIZE);
+  }
+  return;
+}
+
+void clean_stdin(void)
 {
-	
+    int c;
+    do {
+        c = getchar();
+    } while (c != '\n' && c != EOF);
 }

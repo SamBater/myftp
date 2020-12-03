@@ -69,8 +69,23 @@ void ftp_cmd(int sockfd, char* buff)
 	}
 	else if(strncmp(buff,"put",3) == 0)
 	{
-		char *content = readFile("put.txt");
-		send(sockfd,content,MAX,0);
+		//char *content = readFile("put.txt");
+		// send(sockfd,content,MAX,0);
+		// recv(sockfd,buff,MAX,0);
+		// puts(buff);
+
+		FILE *f = fopen("put.txt","r+");
+		while(fgets(buff,MAX,f) != NULL)
+		{
+			send(sockfd,buff,MAX,0);
+			bzero(buff,MAX);
+
+		}
+		//添加EOF 作为接受完的标志.
+		char c = EOF;
+		send(sockfd,&c,1,0);
+		fclose(f);
+
 		recv(sockfd,buff,MAX,0);
 		puts(buff);
 	}
@@ -87,8 +102,8 @@ void func(int sockfd)
 	bzero(buff, MAX);
 	while (1)
 	{
-		fflush(stdout);
-		putchar(">");
+fflush(stdout);
+		putchar('>');
 		gets(buff);
 		send(sockfd, buff, MAX, 0);
 		ftp_cmd(sockfd, buff);
