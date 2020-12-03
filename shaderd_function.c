@@ -1,10 +1,12 @@
 #include <arpa/inet.h>
-#include <regex.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-
+#include <limits.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#define MAX 255
 typedef struct 
 {
     char * user;
@@ -13,30 +15,63 @@ typedef struct
 	char * port;
 }login_info;
 
-
-int match(const char *string, const char *pattern)
+typedef enum
 {
-	regex_t re;
-	if (regcomp(&re, pattern, REG_EXTENDED|REG_NOSUB) != 0) return 0;
-	int status = regexec(&re, string, 0, 0, 0);
-	regfree(&re);
-	if (status != 0) return 0;
-	return 1;
-    // 	const char* s1 = "abc2";
-	// const char* s2 = "b123";
-	// const char* re = "b[1-9]+";
-	// printf("%s Given string matches %s? %s\n", s1, re, match(s1, re) ? "true" : "false");
-	// printf("%s Given string matches %s? %s\n", s2, re, match(s2, re) ? "true" : "false");
+	ok,notexists,login_failed
+}fileInformation;
+
+char *readFile(char *fileName) {
+    FILE *file = fopen(fileName, "r");
+    char *code;
+    size_t n = 0;
+    int c;
+
+    if (file == NULL) 
+	{
+		return NULL;
+	}
+    fseek(file, 0, SEEK_END);
+    long f_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    code = malloc(f_size);
+
+    while ((c = fgetc(file)) != EOF) {
+        code[n++] = (char)c;
+    }
+
+    code[n] = '\0';        
+
+	fclose(file);
+    return code;
 }
 
-const char* split(const char* str,char step)
+char *saveFile(char *fileName,char *content)
 {
-    char *t = str;
-    while(t)
-    {
-        if(*t == step)
-        {
+	FILE *file = fopen(fileName, "w+");
+	char *code;
+	size_t n = 0;
 
-        }
-    }
+	if(file == NULL)
+	{
+		printf("open file %s error!",fileName);
+		return NULL;
+	}
+
+	fputs(content,file);
+	fclose(file);
+}
+
+void client_usage()
+{
+	printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
+}
+
+void putFile()
+{
+
+}
+
+void getFile()
+{
+	
 }
