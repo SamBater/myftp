@@ -57,7 +57,7 @@ void reaction(int socofd, char *buff)
 	// 创建/删除目录（lmkdir/lrmdir）、
 	if (strncmp(cmd, "lmdir", sizeof(buff)) == 0)
 	{
-
+		//printf
 	}
    	
 
