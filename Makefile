@@ -1,5 +1,5 @@
 run : myserver myftp shaderd_function.c
-	./myftp root:w1ww11w123@0:0XBEAF ;
+	./myftp root:passwd@0.0.0.0:0000 ;
 clean:
 	sudo rm myserver myftp
 myserver:myserver.c shaderd_function.c
