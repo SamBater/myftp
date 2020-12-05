@@ -67,14 +67,36 @@ void ftp_cmd(int sockfd, char* buff)
 		}
 		
 	}
+	else if(strncmp(buff,"mput",4) == 0)
+	{
+		char tmp[MAX];
+		strcpy(tmp,buff);
+		char * token = strtok(tmp," ");
+		//token 为parms
+		while(token !=NULL)
+		{
+			token = strtok(NULL," ");
+			if(token) 
+			{
+				FILE *f = fopen(token,"r+");
+				while(fgets(buff,MAX,f) != NULL)
+				{
+					send(sockfd,buff,MAX,0);
+					bzero(buff,MAX);
+				}
+				//添加EOF 作为接受完的标志.
+				char c = EOF;
+				send(sockfd,&c,1,0);
+				fclose(f);
+				//等待对方确认
+				recv(sockfd,buff,MAX,0);
+				puts(buff);
+			}
+		}
+	}
 	else if(strncmp(buff,"put",3) == 0)
 	{
-		//char *content = readFile("put.txt");
-		// send(sockfd,content,MAX,0);
-		// recv(sockfd,buff,MAX,0);
-		// puts(buff);
-
-		FILE *f = fopen("put.txt","r+");
+		FILE *f = fopen(parm,"r+");
 		while(fgets(buff,MAX,f) != NULL)
 		{
 			send(sockfd,buff,MAX,0);

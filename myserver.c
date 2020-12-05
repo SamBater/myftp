@@ -100,10 +100,10 @@ void reaction(int socofd, char *buff)
 
 	else if (strcmp(cmd, "put") == 0)
 	{
-		//  recv(socofd,buff,MAX,0);
-
-		//  saveFile("save.txt",buff);
-		FILE *f = fopen("save.txt","w+");
+		char name[MAX];
+		char *token = parm;
+		sprintf(name,"%s(copy)",token);
+		FILE *f = fopen(name,"w+");
 		while(1)
 		{
 			int n = recv(socofd,buff,MAX,0);
@@ -114,13 +114,36 @@ void reaction(int socofd, char *buff)
 			bzero(buff,MAX);
 		}
 		fclose(f);
-		puts("out of circle");
 		strcpy(buff,"put complete.");
 		puts("done");
 	}
-	else if (strcmp(buff, "mput") == 0)
+	else if (strcmp(cmd, "mput") == 0)
 	{
-
+		char tmp[MAX];
+		strcpy(tmp,buff);
+		char *token = strtok(tmp," ");
+		while(token != NULL)
+		{
+			token = strtok(NULL," ");
+			if(token)
+			{
+				char name[MAX];
+				sprintf(name,"(copy)%s",token);
+				FILE *f = fopen(name,"w+");
+				while(1)
+				{
+					int n = recv(socofd,buff,MAX,0);
+					printf("recv %d bytes.\n",n);
+					if(n <=0 || buff[n-1] == EOF)break;
+					fprintf(f,"%s",buff);
+					bzero(buff,MAX);
+				}
+				fclose(f);
+				strcpy(buff,"put complete.");
+				send(socofd, buff, MAX, 0);
+				puts("done");
+			}
+		}
 	}
 
 	//    下载单个/多个文件（get/mget）。
