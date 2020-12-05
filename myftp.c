@@ -55,17 +55,32 @@ void ftp_cmd(int sockfd, char* buff)
 	sscanf(buff,"%s %s",cmd,parm);
 	if(strncmp(buff,"get",3) == 0)
 	{
-		read(sockfd,&stat,1);
-		recv(sockfd,buff,MAX,0);
-		if(stat == ok)
+		char target[MAX];
+		sprintf(target,"%s(get)",parm);
+		receive_file(sockfd,buff,target);
+	}
+
+	else if(strncmp(buff,"mget",4) == 0)
+	{
+		char tmp[MAX];
+		strcpy(tmp,buff);
+		char * token = strtok(tmp," ");
+		//token 为parms
+		while(token !=NULL)
 		{
-			saveFile("save.txt",buff);
+			token = strtok(NULL," ");
+			if(token) 
+			{
+				char target[MAX];
+				sprintf(target,"%s(mget)",token);
+				receive_file(sockfd,buff,target);
+			}
 		}
-		else
-		{
-			puts(buff);
-		}
-		
+	}
+
+	else if(strncmp(buff,"put",3) == 0)
+	{
+		send_file(sockfd,buff,parm);
 	}
 	else if(strncmp(buff,"mput",4) == 0)
 	{
@@ -78,38 +93,9 @@ void ftp_cmd(int sockfd, char* buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
-				FILE *f = fopen(token,"r+");
-				while(fgets(buff,MAX,f) != NULL)
-				{
-					send(sockfd,buff,MAX,0);
-					bzero(buff,MAX);
-				}
-				//添加EOF 作为接受完的标志.
-				char c = EOF;
-				send(sockfd,&c,1,0);
-				fclose(f);
-				//等待对方确认
-				recv(sockfd,buff,MAX,0);
-				puts(buff);
+				send_file(sockfd,buff,token);
 			}
 		}
-	}
-	else if(strncmp(buff,"put",3) == 0)
-	{
-		FILE *f = fopen(parm,"r+");
-		while(fgets(buff,MAX,f) != NULL)
-		{
-			send(sockfd,buff,MAX,0);
-			bzero(buff,MAX);
-
-		}
-		//添加EOF 作为接受完的标志.
-		char c = EOF;
-		send(sockfd,&c,1,0);
-		fclose(f);
-
-		recv(sockfd,buff,MAX,0);
-		puts(buff);
 	}
 	else
 	{
@@ -124,7 +110,6 @@ void func(int sockfd)
 	bzero(buff, MAX);
 	while (1)
 	{
-fflush(stdout);
 		putchar('>');
 		gets(buff);
 		send(sockfd, buff, MAX, 0);

@@ -8,102 +8,61 @@
 #include <sys/stat.h>
 #define MAX 255
 #define SIZE 1500
-typedef struct 
+typedef struct
 {
-    char * user;
-	char * pwd;
-	char * ip;
-	char * port;
-}login_info;
+  char *user;
+  char *pwd;
+  char *ip;
+  char *port;
+} login_info;
 
 typedef enum
 {
-	ok,notexists,login_failed
-}fileInformation;
-
-char *readFile(char *fileName) {
-    FILE *file = fopen(fileName, "r");
-    char *code;
-    size_t n = 0;
-    int c;
-
-    if (file == NULL) 
-	{
-		return NULL;
-	}
-    fseek(file, 0, SEEK_END);
-    long f_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    code = malloc(f_size);
-
-    while ((c = fgetc(file)) != EOF) {
-        code[n++] = (char)c;
-    }
-
-    code[n] = '\0';        
-
-	fclose(file);
-    return code;
-}
-
-char *saveFile(char *fileName,char *content)
-{
-	FILE *file = fopen(fileName, "w+");
-	char *code;
-	size_t n = 0;
-
-	if(file == NULL)
-	{
-		printf("open file %s error!",fileName);
-		return NULL;
-	}
-
-	fputs(content,file);
-	fclose(file);
-}
+  ok,
+  notexists,
+  login_failed
+} fileInformation;
 
 void client_usage()
 {
-	printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
+  printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
 }
 
-void send_file(FILE *fp, int sockfd){
-  int n;
-  char data[SIZE] = {0};
-
-  while(fgets(data, SIZE, fp) != NULL) {
-    if (send(sockfd, data, sizeof(data), 0) == -1) {
-      perror("[-]Error in sending file.");
-      exit(1);
-    }
-    bzero(data, SIZE);
-  }
-}
-
-void write_file(int sockfd){
-  int n;
-  FILE *fp;
-  char *filename = "recv.txt";
-  char buffer[SIZE];
-
-  fp = fopen(filename, "w");
-  while (1) {
-    n = recv(sockfd, buffer, SIZE, 0);
-	printf("recv:%d",n);
-    if (n <= 0){
-      break;
-      return;
-    }
-    fprintf(fp, "%s", buffer);
-    bzero(buffer, SIZE);
-  }
-  return;
-}
-
-void clean_stdin(void)
+void send_file(int sockfd, char *buff, char *fileName)
 {
-    int c;
-    do {
-        c = getchar();
-    } while (c != '\n' && c != EOF);
+  FILE *f = fopen(fileName, "r+");
+  bzero(buff, MAX);
+  while (fgets(buff, MAX, f) != NULL)
+  {
+    send(sockfd, buff, MAX, 0);
+    bzero(buff, MAX);
+  }
+  //添加EOF 作为接受完的标志.
+  char c = EOF;
+  send(sockfd, &c, 1, 0);
+  fclose(f);
+
+  puts("send done");
+
+  //等待对方发送完成信息
+  recv(sockfd, buff, MAX, 0);
+  puts(buff);
+}
+
+void receive_file(int sockfd, char *buff, char *fileName)
+{
+  FILE *f = fopen(fileName, "w+");
+  while (1)
+  {
+    int n = recv(sockfd, buff, MAX, 0);
+    printf("recv %d bytes.\n", n);
+    if (n <= 0 || buff[n - 1] == EOF)
+      break;
+    fprintf(f, "%s", buff);
+    bzero(buff, MAX);
+  }
+  fclose(f);
+  puts("get done");
+  strcpy(buff,"put complete");
+  send(sockfd,buff,MAX,0);
 }
