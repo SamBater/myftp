@@ -5,6 +5,7 @@
 #define PORT 8080
 #define SA struct sockaddr
 
+trans_mode mode = binary;
 //将远程用户、服务器信息读入
 login_info *check_cmd(char *argv)
 {
@@ -56,8 +57,12 @@ void ftp_cmd(int sockfd, char* buff)
 	if(strncmp(buff,"get",3) == 0)
 	{
 		char target[MAX];
-		sprintf(target,"%s(get)",parm);
-		receive_file(sockfd,buff,target);
+		sprintf(target,"(getb)%s",parm);
+		
+		if(mode == binary)
+			recive_binaryFile(sockfd,target);
+		else
+			receive_file(sockfd,buff,target);
 	}
 
 	else if(strncmp(buff,"mget",4) == 0)
@@ -72,15 +77,22 @@ void ftp_cmd(int sockfd, char* buff)
 			if(token) 
 			{
 				char target[MAX];
-				sprintf(target,"%s(mget)",token);
-				receive_file(sockfd,buff,target);
+				sprintf(target,"(mgetb)%s",token);
+
+				if(mode == binary)
+					recive_binaryFile(sockfd,target);
+				else
+					receive_file(sockfd,buff,target);
 			}
 		}
 	}
 
 	else if(strncmp(buff,"put",3) == 0)
 	{
-		send_file(sockfd,buff,parm);
+		if(mode == binary)
+			send_binaryfile(sockfd,buff,parm);
+		else
+			send_file(sockfd,buff,parm);
 	}
 	else if(strncmp(buff,"mput",4) == 0)
 	{
@@ -93,7 +105,10 @@ void ftp_cmd(int sockfd, char* buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
-				send_file(sockfd,buff,token);
+				if(mode == binary)
+					send_binaryfile(sockfd,buff,token);
+				else
+					send_file(sockfd,buff,token);
 			}
 		}
 	}
@@ -108,6 +123,8 @@ void func(int sockfd)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
+
+
 	while (1)
 	{
 		putchar('>');

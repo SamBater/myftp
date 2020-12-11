@@ -16,6 +16,7 @@
 #include "shaderd_function.c"
 
 static int client_count_so_far = 0;
+trans_mode mode = binary;
 
 /// @return 0 - password is correct, otherwise no need root permision
 int CheckPassword(const char *user, const char *password)
@@ -66,7 +67,7 @@ void reaction(int socofd, char *buff)
 
 	}
 
-	//显示当前路径（lpwd）、
+	//显示当前路径（lpwd)
 	else if (strcmp(buff, "lpwd") == 0)
 	{
 		if(getcwd(buff,MAX)!=NULL)
@@ -103,7 +104,7 @@ void reaction(int socofd, char *buff)
 	else if (strcmp(cmd, "put") == 0)
 	{
 		char fileName[MAX];
-		sprintf(fileName,"%s(put)",parm);
+		sprintf(fileName,"(put)%s",parm);
 		receive_file(socofd,buff,fileName);
 	}
 
@@ -116,10 +117,13 @@ void reaction(int socofd, char *buff)
 		{
 			token = strtok(NULL," ");
 			char fileName[MAX];
-			sprintf(fileName,"%s(mput)",token);
+			sprintf(fileName,"(mput)%s",token);
 			if(token)
 			{
-				receive_file(socofd,buff,fileName);
+				if(mode == binary)
+					recive_binaryFile(socofd,fileName);
+				else
+					receive_file(socofd,buff,fileName);
 			}
 		}
 	}
@@ -127,7 +131,10 @@ void reaction(int socofd, char *buff)
 	//    下载单个/多个文件（get/mget）。
 	else if (strcmp(cmd, "get") == 0)
 	{
-		send_file(socofd,buff,parm);
+		if(mode == binary)
+			send_binaryfile(socofd,buff,parm);
+		else
+			send_file(socofd,buff,parm);
 	}
 	else if (strcmp(cmd, "mget") == 0)
 	{
@@ -140,7 +147,10 @@ void reaction(int socofd, char *buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
-				send_file(socofd,buff,token);
+				if(mode == binary)
+					send_binaryfile(socofd,buff,token);
+				else
+					send_file(socofd,buff,token);
 			}
 		}
 	}
@@ -244,18 +254,23 @@ int main()
 	len = sizeof(cli);
 
 	// Accept the data packet from client and verification
-	connfd = accept(sockfd, (SA *)&cli, &len);
-	if (connfd < 0)
+	while(1)
 	{
-		printf("server acccept failed...\n");
-		exit(0);
+		connfd = accept(sockfd, (SA *)&cli, &len);
+		if(fork() == 0)
+		{
+			if (connfd < 0)
+			{
+				printf("server acccept failed...\n");
+				exit(0);
+			}
+			else
+				printf("server acccept the client...\n");
+
+			if(	detectUser_Pwd(connfd) == ok)
+				func(connfd);
+			// After chatting close the socket
+			close(sockfd);
+		}
 	}
-	else
-		printf("server acccept the client...\n");
-
-	if(	detectUser_Pwd(connfd) == ok)
-		func(connfd);
-
-	// After chatting close the socket
-	close(sockfd);
 }
