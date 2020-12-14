@@ -96,8 +96,18 @@ void reaction(int socofd, char *buff)
 		}
 	}
 	//   查看当前目录下的所有文件（dir）、
-	else if (strcmp(buff, "dir") == 0)
+	else if (strcmp(cmd, "dir") == 0)
 	{
+		struct dirent *myfile;
+		DIR * mydir = opendir(".");
+		while((myfile = readdir(mydir)) != NULL)
+		{
+			char buf[255];
+			bzero(buf,255);
+			sprintf(buf,"%s",myfile->d_name);
+			send(socofd,buf,MAX,0);
+			puts(buf);
+		}
 	}
 	// 	   上传单个/多个文件（put/mput）、
 
@@ -253,24 +263,21 @@ int main()
 		printf("Server listening..\n");
 	len = sizeof(cli);
 
-	// Accept the data packet from client and verification
 	while(1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
-		if(fork() == 0)
-		{
-			if (connfd < 0)
-			{
-				printf("server acccept failed...\n");
-				exit(0);
-			}
-			else
-				printf("server acccept the client...\n");
 
-			if(	detectUser_Pwd(connfd) == ok)
+		//如果coonfd 成功 并且 通过了密码检测，就开一个新子进程去处理.
+		if(connfd > 0 && detectUser_Pwd(connfd) == ok)
+		{
+			if(fork() == 0)
+			{
+				printf("server acccept the client...\n");
 				func(connfd);
-			// After chatting close the socket
-			close(sockfd);
+				close(sockfd);
+			}
 		}
+		else
+			printf("server acccept failed...\n");
 	}
 }

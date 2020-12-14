@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #define MAX 255
 #define SIZE 1500
 typedef struct

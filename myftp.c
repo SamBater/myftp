@@ -54,6 +54,17 @@ void ftp_cmd(int sockfd, char* buff)
 	bzero(parm,MAX);
 
 	sscanf(buff,"%s %s",cmd,parm);
+
+	if(strncmp(buff,"dir",3) == 0)
+	{
+		while (1)
+		{
+			recv(sockfd,buff,MAX,0);
+			printf("%s\t",buff);
+		}
+		
+	}
+
 	if(strncmp(buff,"get",3) == 0)
 	{
 		char target[MAX];
