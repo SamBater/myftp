@@ -53,14 +53,12 @@ void ftp_cmd(int sockfd, char* buff)
 	bzero(cmd,MAX);
 	bzero(parm,MAX);
 	sscanf(buff,"%s %s",cmd,parm);
-
-	puts("this is ok");
-	if(strcmp(cmd,"binary"))
+	if(strcmp(cmd,"binary") == 0)
 	{
 		mode = binary;
 	}
 
-	else if(strcmp(cmd,"ascii"))
+	else if(strcmp(cmd,"ascii") ==0)
 	{
 		mode = ascii;
 	}
@@ -68,21 +66,26 @@ void ftp_cmd(int sockfd, char* buff)
 	else if(strncmp(cmd,"lmdir",5) == 0)
 	{
 		//在main loop中已发送
+		puts("this is a test msg");
 	}
 
 	else if(strncmp(cmd,"lrmdir",6) == 0)
 	{
 		//在Main loop中已发送.
+		puts("this is a test msg");
 	}
 
-	else if(strncmp(cmd,"dir",3) == 0)
+	else if(strcmp(cmd,"dir") == 0)
 	{
 		while (1)
 		{
+			bzero(buff,MAX);
 			recv(sockfd,buff,MAX,0);
+							printf("file:%s\t",buff);	
 			if(buff[0]!=-100)
 			{
-				printf("%s\t",buff);	
+				fflush(stdout);
+
 			}
 			else
 				break;
@@ -158,15 +161,12 @@ void func(int sockfd)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
-	recv(sockfd,buff,MAX,0);
-	puts(buff);
 	while (1)
 	{
 		putchar('>');
 		gets(buff);
 		int n = send(sockfd, buff, MAX, 0);
-
-		if(strncmp(buff,"quit",4) == 0) break;
+		if(strncmp(buff,"quit",4) == 0 || n <= 0) break;
 		
 		ftp_cmd(sockfd, buff);
 		bzero(buff, sizeof(buff));

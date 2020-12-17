@@ -128,10 +128,10 @@ void reaction(int socofd, char *buff)
 			char buf[255];
 			sprintf(buf,"%s",myfile->d_name);
 			send(socofd,buf,MAX,0);
-			//puts(buf);
+			puts(buf);
 		}
-		char c = -100;
-		send(socofd,&c,1,0);
+		//char c = -100;
+		//send(socofd,&c,1,0);
 	}
 	// 	   上传单个/多个文件（put/mput）、
 
@@ -242,12 +242,10 @@ int detectUser_Pwd(int sockfd)
 }
 
 // Function designed for chat between client and server.
-void* func(int sockfd)
+void func(int sockfd)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
-	sprintf(buff,"this is a test msg to client.\n");
-	send(sockfd,buff,MAX,0);
 	while (1)
 	{
 		recv(sockfd, buff, MAX, 0);
@@ -285,7 +283,7 @@ void server_cmd()
 		{
 			printAllUser(user_list);
 		}
-		else if(strcmp(cmd,"kill"))
+		else if(strcmp(cmd,"kill") == 0)
 		{
 			//
 		}
@@ -338,8 +336,8 @@ int main()
 		printf("Server listening..\n");
 	len = sizeof(cli);
 	
-	//pthread_t server;
-	//pthread_create(&server,NULL,server_cmd,NULL);
+	pthread_t server;
+	pthread_create(&server,NULL,server_cmd,NULL);
 	while(1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);

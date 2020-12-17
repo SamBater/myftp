@@ -19,16 +19,16 @@ typedef struct
 
 struct User;
 
+typedef struct User* User_p;
 
 typedef struct
 {
   int sockfd;
   char *userName;
   //权限
-  struct User* next;
+  User_p next;
 }User;
 
-typedef struct User* User_p;
 
 typedef enum
 {
@@ -192,9 +192,10 @@ void printAllUser(User* root)
 
 void quit(User* root)
 {
+      puts("yes");
   for(User* tmp=root->next;tmp;tmp=tmp->next)
   {
-    //shutdown(tmp->sockfd,SHUT_RDWR);
+    shutdown(tmp->sockfd,SHUT_RDWR);
     close(tmp->sockfd);
   }
   exit(0);
