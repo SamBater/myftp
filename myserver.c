@@ -227,6 +227,9 @@ int detectUser_Pwd(int sockfd)
 		User* newUser = (User*)malloc(sizeof(User));
 		newUser->sockfd = sockfd;
 		newUser->userName = user;
+		newUser->uid = getpwnam(user)->pw_uid;
+		newUser->gid = getpwnam(user)->pw_gid;
+		printf("addUser\nuid = %d\tpid = %d\t name = %s\n",newUser->uid,newUser->gid,newUser->userName);
 		addUser(user_list,newUser);
 	}
 	else
