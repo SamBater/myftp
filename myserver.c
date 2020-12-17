@@ -15,8 +15,10 @@
 
 #include "shaderd_function.c"
 
-static int client_count_so_far = 0;
+static int client_count_so_far = 0;	//系统访客总数
+static int client_current = 0;		//活动用户总数
 trans_mode mode = binary;
+User* user_list;
 
 /// @return 0 - password is correct, otherwise no need root permision
 int CheckPassword(const char *user, const char *password)
@@ -55,6 +57,17 @@ void reaction(int socofd, char *buff)
 	bzero(cmd,MAX);
 	int n = sscanf(buff,"%s %s",cmd,parm);
 	if(n <= 0) strcpy(buff,"no such cmd.");
+
+	if(strcmp(cmd,"binary"))
+	{
+		mode = binary;
+	}
+
+	else if(strcmp(cmd,"ascii"))
+	{
+		mode = ascii;
+	}
+
 	// 创建/删除目录（lmkdir/lrmdir）、
 	if (strncmp(cmd, "lmdir", 5) == 0)
 	{
@@ -114,8 +127,8 @@ void reaction(int socofd, char *buff)
 		{
 			char buf[255];
 			sprintf(buf,"%s",myfile->d_name);
-			puts(buf);
 			send(socofd,buf,MAX,0);
+			//puts(buf);
 		}
 		char c = -100;
 		send(socofd,&c,1,0);
@@ -207,7 +220,14 @@ int detectUser_Pwd(int sockfd)
 	if (CheckPassword(user, pwd) == 0)
 	{
 		stat = ok;
-		sprintf(buff, "Welcome,you are the cilent #%d\n", ++client_count_so_far);
+		sprintf(buff, "Welcome,you are the cilent %d\n", ++client_count_so_far);
+		++client_current;
+
+		//加入到用户列表.
+		User* newUser = (User*)malloc(sizeof(User));
+		newUser->sockfd = sockfd;
+		newUser->userName = user;
+		addUser(user_list,newUser);
 	}
 	else
 	{
@@ -222,15 +242,57 @@ int detectUser_Pwd(int sockfd)
 }
 
 // Function designed for chat between client and server.
-void func(int sockfd)
+void* func(int sockfd)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
+	sprintf(buff,"this is a test msg to client.\n");
+	send(sockfd,buff,MAX,0);
 	while (1)
 	{
 		recv(sockfd, buff, MAX, 0);
+ 		if(strncmp(buff,"quit",4) == 0) break;
 		reaction(sockfd, buff);
 		bzero(buff, sizeof(buff));
+	}
+	deleteUser(user_list,sockfd);
+	close(sockfd);
+	client_current--;
+}
+/*
+count current 当前活动用户数 退出时减1
+count all 显示系统访客总数 ==目前的so_far
+list 显示当前在线的所有用户的用户名 连接后缓存下来 退出时删除
+kill username 强制删除某个用户 删除用户命令
+quit 关闭ftp
+*/
+void server_cmd()
+{
+	while(1)
+	{
+		char cmd[MAX];
+		printf("> ");
+		gets(cmd);
+		if(strcmp(cmd,"count current") == 0)
+		{
+			printf("count current = %d \n",client_current);
+		}
+		else if(strcmp(cmd,"count all") == 0)
+		{
+			printf("count all = %d \n",client_count_so_far);
+		}
+		else if(strcmp(cmd,"list") == 0)
+		{
+			printAllUser(user_list);
+		}
+		else if(strcmp(cmd,"kill"))
+		{
+			//
+		}
+		else if(strcmp(cmd,"quit") == 0)
+		{
+			quit(user_list);
+		}
 	}
 }
 
@@ -238,6 +300,8 @@ int main()
 {
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
+
+	user_list = (User*)malloc(sizeof(User));
 
 	// socket create and verification
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -273,20 +337,17 @@ int main()
 	else
 		printf("Server listening..\n");
 	len = sizeof(cli);
-
+	
+	//pthread_t server;
+	//pthread_create(&server,NULL,server_cmd,NULL);
 	while(1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
 
-		//如果coonfd 成功 并且 通过了密码检测，就开一个新子进程去处理.
 		if(connfd > 0 && detectUser_Pwd(connfd) == ok)
 		{
-			if(fork() == 0)
-			{
-				printf("server acccept the client...\n");
-				func(connfd);
-				close(sockfd);
-			}
+			pthread_t pid;
+			pthread_create(&pid,NULL,func,connfd);
 		}
 		else
 			printf("server acccept failed...\n");

@@ -17,6 +17,19 @@ typedef struct
   char *port;
 } login_info;
 
+struct User;
+
+
+typedef struct
+{
+  int sockfd;
+  char *userName;
+  //权限
+  struct User* next;
+}User;
+
+typedef struct User* User_p;
+
 typedef enum
 {
   ok,
@@ -138,4 +151,51 @@ int recive_binaryFile(int sockfd,char *fileName)
   } while (fileSize > 0);
   printf("recv total %lld bytes.\n",c);
   fclose(f);
+}
+
+void addUser(User* root,User* next)
+{
+  User* tmp = root;
+  while(tmp)
+  {
+    if(tmp->next == NULL)
+    {
+      tmp->next = next;
+      break;
+    }
+    tmp = tmp->next;
+  }
+}
+
+void deleteUser(User* root,int sockfd)
+{
+  for(User* tmp=root;tmp;tmp=tmp->next)
+  {
+    User *next = tmp->next;
+    if(next && next->sockfd == sockfd)
+    {
+      tmp->next = next->next;
+      free(next);
+      break;
+    }
+  }
+}
+
+void printAllUser(User* root)
+{
+  for(User* tmp = root->next;tmp;tmp=tmp->next)
+  {
+    printf("%s\t",tmp->userName);
+  }
+  puts("");
+}
+
+void quit(User* root)
+{
+  for(User* tmp=root->next;tmp;tmp=tmp->next)
+  {
+    //shutdown(tmp->sockfd,SHUT_RDWR);
+    close(tmp->sockfd);
+  }
+  exit(0);
 }
