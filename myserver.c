@@ -48,8 +48,9 @@ int CheckPassword(const char *user, const char *password)
 	}
 }
 
-void reaction(int socofd, char *buff)
+void reaction(User* user, char *buff)
 {
+	int socofd = user->sockfd;
 	char cmd[MAX];
 	char parm[MAX];
 	char stat;
@@ -137,6 +138,12 @@ void reaction(int socofd, char *buff)
 
 	else if (strcmp(cmd, "put") == 0)
 	{
+		char stat;
+		recv(socofd,&stat,1,0);
+		if(stat < 0)
+		{
+			return;
+		}
 		char fileName[MAX];
 		sprintf(fileName,"(put)%s",parm);
 		receive_file(socofd,buff,fileName);
@@ -154,6 +161,12 @@ void reaction(int socofd, char *buff)
 			sprintf(fileName,"(mput)%s",token);
 			if(token)
 			{
+				char stat;
+				recv(socofd,&stat,1,0);
+				if(stat < 0)
+				{
+					return;
+				}
 				if(mode == binary)
 					recive_binaryFile(socofd,fileName);
 				else
@@ -165,6 +178,17 @@ void reaction(int socofd, char *buff)
 	//    下载单个/多个文件（get/mget）。
 	else if (strcmp(cmd, "get") == 0)
 	{
+		//检测权限
+		mode_t v = vaild_acess(parm,user->uid,user->gid);
+		v = readAble(v);
+		if(v <= 0)
+		{
+			char stat = -100;
+			send(socofd,&stat,1,0);
+			return;
+		}
+
+		//发送
 		if(mode == binary)
 			send_binaryfile(socofd,buff,parm);
 		else
@@ -181,6 +205,14 @@ void reaction(int socofd, char *buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
+				mode_t v = vaild_acess(token,user->uid,user->gid);
+				v = readAble(v);
+				if(v <= 0)
+				{
+					char stat = -100;
+					send(socofd,&stat,1,0);
+					return;
+				}
 				if(mode == binary)
 					send_binaryfile(socofd,buff,token);
 				else
@@ -196,7 +228,7 @@ void reaction(int socofd, char *buff)
 	
 }
 
-int detectUser_Pwd(int sockfd)
+User* detectUser_Pwd(int sockfd)
 {
 	char buff[MAX];
 	char user[MAX];
@@ -207,7 +239,7 @@ int detectUser_Pwd(int sockfd)
 	bzero(pwd, MAX);
 	recv(sockfd, buff, MAX, 0);
 	int n = sscanf(buff, "%s %s", user, pwd);
-	
+	User* newUser = NULL;
 	//参数检测
 	if(n < 2)
 	{
@@ -224,7 +256,7 @@ int detectUser_Pwd(int sockfd)
 		++client_current;
 
 		//加入到用户列表.
-		User* newUser = (User*)malloc(sizeof(User));
+		newUser = (User*)malloc(sizeof(User));
 		newUser->sockfd = sockfd;
 		newUser->userName = user;
 		newUser->uid = getpwnam(user)->pw_uid;
@@ -240,20 +272,22 @@ int detectUser_Pwd(int sockfd)
 	//回显信息
 
 	write(sockfd,&stat,1);
-	send(sockfd, buff, sizeof(buff), 0);
-	return stat;
+	send(sockfd, buff, strlen(buff), 0);
+	return newUser;
 }
 
 // Function designed for chat between client and server.
-void func(int sockfd)
+void func(User* user)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
+
+	int sockfd = user->sockfd;
 	while (1)
 	{
 		recv(sockfd, buff, MAX, 0);
  		if(strncmp(buff,"quit",4) == 0) break;
-		reaction(sockfd, buff);
+		reaction(user, buff);
 		bzero(buff, sizeof(buff));
 	}
 	deleteUser(user_list,sockfd);
@@ -344,11 +378,12 @@ int main()
 	while(1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
-
-		if(connfd > 0 && detectUser_Pwd(connfd) == ok)
+		User* user = NULL;
+		if(connfd > 0 && (user = detectUser_Pwd(connfd)))
 		{
 			pthread_t pid;
-			pthread_create(&pid,NULL,func,connfd);
+			pthread_create(&pid,NULL,func,(void*)user);
+			//func(user);
 		}
 		else
 			printf("server acccept failed...\n");

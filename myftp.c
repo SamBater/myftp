@@ -66,13 +66,11 @@ void ftp_cmd(int sockfd, char* buff)
 	else if(strncmp(cmd,"lmdir",5) == 0)
 	{
 		//在main loop中已发送
-		puts("this is a test msg");
 	}
 
 	else if(strncmp(cmd,"lrmdir",6) == 0)
 	{
 		//在Main loop中已发送.
-		puts("this is a test msg");
 	}
 
 	else if(strcmp(cmd,"dir") == 0)
@@ -81,11 +79,9 @@ void ftp_cmd(int sockfd, char* buff)
 		{
 			bzero(buff,MAX);
 			recv(sockfd,buff,MAX,0);
-							printf("file:%s\t",buff);	
 			if(buff[0]!=-100)
 			{
-				fflush(stdout);
-
+				puts(buff);
 			}
 			else
 				break;
@@ -94,9 +90,16 @@ void ftp_cmd(int sockfd, char* buff)
 
 	else if(strncmp(buff,"get",3) == 0)
 	{
+		char stat;
+		recv(sockfd,&stat,1,0);
+		if(stat < 0 )
+		{
+			puts("Permission Denied.");
+			return;
+		}
+
 		char target[MAX];
 		sprintf(target,"(getb)%s",parm);
-		
 		if(mode == binary)
 			recive_binaryFile(sockfd,target);
 		else
@@ -114,6 +117,13 @@ void ftp_cmd(int sockfd, char* buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
+				char stat;
+				recv(sockfd,&stat,1,0);
+				if(stat < 0 )
+				{
+					puts("Permission Denied.");
+					return;
+				}
 				char target[MAX];
 				sprintf(target,"(mgetb)%s",token);
 
@@ -127,6 +137,15 @@ void ftp_cmd(int sockfd, char* buff)
 
 	else if(strncmp(buff,"put",3) == 0)
 	{
+		mode_t v = vaild_acess(parm,getuid(),getgid());
+		v = writeAble(v);
+		if(v <= 0)
+		{
+			char stat = -100;
+			send(sockfd,&stat,1,0);
+			puts("Permission Denied.");
+			return;
+		}
 		if(mode == binary)
 			send_binaryfile(sockfd,buff,parm);
 		else
@@ -143,6 +162,15 @@ void ftp_cmd(int sockfd, char* buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
+				mode_t v = vaild_acess(token,getuid(),getgid());
+				v = writeAble(v);
+				if(v <= 0)
+				{
+					char stat = -100;
+					send(sockfd,&stat,1,0);
+					puts("Permission Denied.");
+					return;
+				}
 				if(mode == binary)
 					send_binaryfile(sockfd,buff,token);
 				else
