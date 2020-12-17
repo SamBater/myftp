@@ -55,17 +55,33 @@ void ftp_cmd(int sockfd, char* buff)
 
 	sscanf(buff,"%s %s",cmd,parm);
 
-	if(strncmp(buff,"dir",3) == 0)
+	if(strncmp(cmd,"lmdir",5) == 0)
+	{
+		//在main loop中已发送
+	}
+
+	else if(strncmp(cmd,"lrmdir",6) == 0)
+	{
+		//在Main loop中已发送.
+	}
+
+	else if(strncmp(cmd,"dir",3) == 0)
 	{
 		while (1)
 		{
 			recv(sockfd,buff,MAX,0);
-			printf("%s\t",buff);
+			if(buff[0]!=-100)
+			{
+				fflush(stdout);
+				printf("%s\t",buff);	
+			}
+			else
+				break;
 		}
-		
+		puts("");
 	}
 
-	if(strncmp(buff,"get",3) == 0)
+	else if(strncmp(buff,"get",3) == 0)
 	{
 		char target[MAX];
 		sprintf(target,"(getb)%s",parm);

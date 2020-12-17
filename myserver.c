@@ -56,15 +56,25 @@ void reaction(int socofd, char *buff)
 	int n = sscanf(buff,"%s %s",cmd,parm);
 	if(n <= 0) strcpy(buff,"no such cmd.");
 	// 创建/删除目录（lmkdir/lrmdir）、
-	if (strncmp(cmd, "lmdir", sizeof(buff)) == 0)
+	if (strncmp(cmd, "lmdir", 5) == 0)
 	{
-		//printf
+		mkdir(parm,777);
 	}
    	
 
-	else if (strcmp(buff, "lrmdir") == 0)
+	else if (strcmp(cmd, "lrmdir") == 0)
 	{
-
+		char tmp[MAX];
+		strcpy(tmp,buff);
+		char *token = strtok(tmp," ");
+		while(token != NULL)
+		{
+			token = strtok(NULL," ");
+			if(token)
+			{
+				mkdir(token,777);
+			}
+		}
 	}
 
 	//显示当前路径（lpwd)
@@ -103,11 +113,12 @@ void reaction(int socofd, char *buff)
 		while((myfile = readdir(mydir)) != NULL)
 		{
 			char buf[255];
-			bzero(buf,255);
 			sprintf(buf,"%s",myfile->d_name);
-			send(socofd,buf,MAX,0);
 			puts(buf);
+			send(socofd,buf,MAX,0);
 		}
+		char c = -100;
+		send(socofd,&c,1,0);
 	}
 	// 	   上传单个/多个文件（put/mput）、
 
