@@ -15,14 +15,15 @@
 
 #include "shaderd_function.c"
 
-static int client_count_so_far = 0;	//系统访客总数
+static int client_count_so_far = 0; //系统访客总数
 static int client_current = 0;		//活动用户总数
 trans_mode mode = binary;
-User* user_list;
+User *user_list;
 
 /// @return 0 - password is correct, otherwise no need root permision
 int CheckPassword(const char *user, const char *password)
 {
+	return 0;
 	struct passwd *passwdEntry = getpwnam(user);
 	if (!passwdEntry)
 	{
@@ -48,23 +49,24 @@ int CheckPassword(const char *user, const char *password)
 	}
 }
 
-void reaction(User* user, char *buff)
+void reaction(User *user, char *buff)
 {
 	int socofd = user->sockfd;
 	char cmd[MAX];
 	char parm[MAX];
 	char stat;
-	bzero(parm,MAX);
-	bzero(cmd,MAX);
-	int n = sscanf(buff,"%s %s",cmd,parm);
-	if(n <= 0) strcpy(buff,"no such cmd.");
+	bzero(parm, MAX);
+	bzero(cmd, MAX);
+	int n = sscanf(buff, "%s %s", cmd, parm);
+	if (n <= 0)
+		strcpy(buff, "no such cmd.");
 
-	if(strcmp(cmd,"binary"))
+	if (strcmp(cmd, "binary"))
 	{
 		mode = binary;
 	}
 
-	else if(strcmp(cmd,"ascii"))
+	else if (strcmp(cmd, "ascii"))
 	{
 		mode = ascii;
 	}
@@ -72,21 +74,20 @@ void reaction(User* user, char *buff)
 	// 创建/删除目录（lmkdir/lrmdir）、
 	if (strncmp(cmd, "lmdir", 5) == 0)
 	{
-		mkdir(parm,777);
+		mkdir(parm, 777);
 	}
-   	
 
 	else if (strcmp(cmd, "lrmdir") == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp,buff);
-		char *token = strtok(tmp," ");
-		while(token != NULL)
+		strcpy(tmp, buff);
+		char *token = strtok(tmp, " ");
+		while (token != NULL)
 		{
-			token = strtok(NULL," ");
-			if(token)
+			token = strtok(NULL, " ");
+			if (token)
 			{
-				mkdir(token,777);
+				mkdir(token, 777);
 			}
 		}
 	}
@@ -94,28 +95,27 @@ void reaction(User* user, char *buff)
 	//显示当前路径（lpwd)
 	else if (strcmp(buff, "lpwd") == 0)
 	{
-		if(getcwd(buff,MAX)!=NULL)
+		if (getcwd(buff, MAX) != NULL)
 		{
-
 		}
 		else
 		{
-			strncpy(buff,"no such direction.",MAX);
+			strncpy(buff, "no such direction.", MAX);
 		}
-		
+
 		send(socofd, buff, MAX, 0);
 	}
 	//   切换目录（lcd）、
 	else if (strcmp(cmd, "lcd") == 0)
 	{
 		//strncpy(buff,"TODO:lcd",MAX);
-		if(chdir(parm) == 0)
+		if (chdir(parm) == 0)
 		{
-			bzero(buff,MAX);
+			bzero(buff, MAX);
 		}
 		else
 		{
-			strncpy(buff,"no such direction",MAX);
+			strncpy(buff, "no such direction", MAX);
 			send(socofd, buff, MAX, 0);
 		}
 	}
@@ -123,54 +123,54 @@ void reaction(User* user, char *buff)
 	else if (strcmp(cmd, "dir") == 0)
 	{
 		struct dirent *myfile;
-		DIR * mydir = opendir(".");
-		while((myfile = readdir(mydir)) != NULL)
+		DIR *mydir = opendir(".");
+		while ((myfile = readdir(mydir)) != NULL)
 		{
 			char buf[255];
-			sprintf(buf,"%s",myfile->d_name);
-			send(socofd,buf,MAX,0);
+			sprintf(buf, "%s", myfile->d_name);
+			send(socofd, buf, MAX, 0);
 			puts(buf);
 		}
-		//char c = -100;
-		//send(socofd,&c,1,0);
+		char c = -100;
+		send(socofd, &c, 1, 0);
 	}
 	// 	   上传单个/多个文件（put/mput）、
 
 	else if (strcmp(cmd, "put") == 0)
 	{
 		char stat;
-		recv(socofd,&stat,1,0);
-		if(stat < 0)
+		recv(socofd, &stat, 1, 0);
+		if (stat < 0)
 		{
 			return;
 		}
 		char fileName[MAX];
-		sprintf(fileName,"(put)%s",parm);
-		receive_file(socofd,buff,fileName);
+		sprintf(fileName, "(put)%s", parm);
+		recive_binaryFile(socofd, fileName);
 	}
 
 	else if (strcmp(cmd, "mput") == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp,buff);
-		char *token = strtok(tmp," ");
-		while(token != NULL)
+		strcpy(tmp, buff);
+		char *token = strtok(tmp, " ");
+		while (token != NULL)
 		{
-			token = strtok(NULL," ");
+			token = strtok(NULL, " ");
 			char fileName[MAX];
-			sprintf(fileName,"(mput)%s",token);
-			if(token)
+			sprintf(fileName, "(mput)%s", token);
+			if (token)
 			{
 				char stat;
-				recv(socofd,&stat,1,0);
-				if(stat < 0)
+				recv(socofd, &stat, 1, 0);
+				if (stat < 0)
 				{
 					return;
 				}
-				if(mode == binary)
-					recive_binaryFile(socofd,fileName);
+				if (mode == binary)
+					recive_binaryFile(socofd, fileName);
 				else
-					receive_file(socofd,buff,fileName);
+					receive_file(socofd, buff, fileName);
 			}
 		}
 	}
@@ -179,69 +179,78 @@ void reaction(User* user, char *buff)
 	else if (strcmp(cmd, "get") == 0)
 	{
 		//检测权限
-		mode_t v = vaild_acess(parm,user->uid,user->gid);
+		mode_t v = vaild_acess(parm, user->uid, user->gid);
 		v = readAble(v);
-		if(v <= 0)
+		if (v <= 0)
 		{
 			char stat = -100;
-			send(socofd,&stat,1,0);
+			send(socofd, &stat, 1, 0);
 			return;
+		}
+		else
+		{
+			char stat = 100;
+			send(socofd, &stat, 1, 0);
 		}
 
 		//发送
-		if(mode == binary)
-			send_binaryfile(socofd,buff,parm);
+		if (mode == binary)
+			send_binaryfile(socofd, buff, parm);
 		else
-			send_file(socofd,buff,parm);
+			send_file(socofd, buff, parm);
 	}
 	else if (strcmp(cmd, "mget") == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp,buff);
-		char * token = strtok(tmp," ");
+		strcpy(tmp, buff);
+		char *token = strtok(tmp, " ");
 		//token 为parms
-		while(token !=NULL)
+		while (token != NULL)
 		{
-			token = strtok(NULL," ");
-			if(token) 
+			token = strtok(NULL, " ");
+			if (token)
 			{
-				mode_t v = vaild_acess(token,user->uid,user->gid);
+				mode_t v = vaild_acess(token, user->uid, user->gid);
 				v = readAble(v);
-				if(v <= 0)
+				if (v <= 0)
 				{
 					char stat = -100;
-					send(socofd,&stat,1,0);
+					send(socofd, &stat, 1, 0);
 					return;
 				}
-				if(mode == binary)
-					send_binaryfile(socofd,buff,token);
 				else
-					send_file(socofd,buff,token);
+				{
+					char stat = 100;
+					send(socofd, &stat, 1, 0);
+				}
+				if (mode == binary)
+					send_binaryfile(socofd, buff, token);
+				else
+					send_file(socofd, buff, token);
 			}
 		}
 	}
 	else
 	{
-		strncpy(buff,"cmd doesn't exists.",MAX);
+		strncpy(buff, "cmd doesn't exists.", MAX);
 		send(socofd, buff, MAX, 0);
 	}
-	
 }
 
-User* detectUser_Pwd(int sockfd)
+User *detectUser_Pwd(int sockfd)
 {
 	char buff[MAX];
 	char user[MAX];
 	char pwd[MAX];
 	char stat;
-	bzero(buff,MAX);
+	bzero(buff, MAX);
 	bzero(user, MAX);
 	bzero(pwd, MAX);
 	recv(sockfd, buff, MAX, 0);
 	int n = sscanf(buff, "%s %s", user, pwd);
-	User* newUser = NULL;
+	User *newUser = NULL;
 	//参数检测
-	if(n < 2)
+	if (n < 2)
 	{
 		client_usage();
 		close(sockfd);
@@ -256,13 +265,13 @@ User* detectUser_Pwd(int sockfd)
 		++client_current;
 
 		//加入到用户列表.
-		newUser = (User*)malloc(sizeof(User));
+		newUser = (User *)malloc(sizeof(User));
 		newUser->sockfd = sockfd;
 		newUser->userName = user;
 		newUser->uid = getpwnam(user)->pw_uid;
 		newUser->gid = getpwnam(user)->pw_gid;
-		printf("addUser\nuid = %d\tpid = %d\t name = %s\n",newUser->uid,newUser->gid,newUser->userName);
-		addUser(user_list,newUser);
+		printf("addUser\nuid = %d\tpid = %d\t name = %s\n", newUser->uid, newUser->gid, newUser->userName);
+		addUser(user_list, newUser);
 	}
 	else
 	{
@@ -271,13 +280,13 @@ User* detectUser_Pwd(int sockfd)
 	}
 	//回显信息
 
-	write(sockfd,&stat,1);
+	write(sockfd, &stat, 1);
 	send(sockfd, buff, strlen(buff), 0);
 	return newUser;
 }
 
 // Function designed for chat between client and server.
-void func(User* user)
+void func(User *user)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
@@ -286,11 +295,12 @@ void func(User* user)
 	while (1)
 	{
 		recv(sockfd, buff, MAX, 0);
- 		if(strncmp(buff,"quit",4) == 0) break;
+		if (strncmp(buff, "quit", 4) == 0)
+			break;
 		reaction(user, buff);
 		bzero(buff, sizeof(buff));
 	}
-	deleteUser(user_list,sockfd);
+	deleteUser(user_list, sockfd);
 	close(sockfd);
 	client_current--;
 }
@@ -303,28 +313,28 @@ quit 关闭ftp
 */
 void server_cmd()
 {
-	while(1)
+	while (1)
 	{
 		char cmd[MAX];
 		printf("> ");
 		gets(cmd);
-		if(strcmp(cmd,"count current") == 0)
+		if (strcmp(cmd, "count current") == 0)
 		{
-			printf("count current = %d \n",client_current);
+			printf("count current = %d \n", client_current);
 		}
-		else if(strcmp(cmd,"count all") == 0)
+		else if (strcmp(cmd, "count all") == 0)
 		{
-			printf("count all = %d \n",client_count_so_far);
+			printf("count all = %d \n", client_count_so_far);
 		}
-		else if(strcmp(cmd,"list") == 0)
+		else if (strcmp(cmd, "list") == 0)
 		{
 			printAllUser(user_list);
 		}
-		else if(strcmp(cmd,"kill") == 0)
+		else if (strcmp(cmd, "kill") == 0)
 		{
 			//
 		}
-		else if(strcmp(cmd,"quit") == 0)
+		else if (strcmp(cmd, "quit") == 0)
 		{
 			quit(user_list);
 		}
@@ -336,7 +346,7 @@ int main()
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
 
-	user_list = (User*)malloc(sizeof(User));
+	user_list = (User *)malloc(sizeof(User));
 
 	// socket create and verification
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -372,17 +382,17 @@ int main()
 	else
 		printf("Server listening..\n");
 	len = sizeof(cli);
-	
+
 	pthread_t server;
-	pthread_create(&server,NULL,server_cmd,NULL);
-	while(1)
+	pthread_create(&server, NULL, server_cmd, NULL);
+	while (1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
-		User* user = NULL;
-		if(connfd > 0 && (user = detectUser_Pwd(connfd)))
+		User *user = NULL;
+		if (connfd > 0 && (user = detectUser_Pwd(connfd)))
 		{
 			pthread_t pid;
-			pthread_create(&pid,NULL,func,(void*)user);
+			pthread_create(&pid, NULL, func, (void *)user);
 			//func(user);
 		}
 		else

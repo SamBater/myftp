@@ -146,6 +146,12 @@ void ftp_cmd(int sockfd, char* buff)
 			puts("Permission Denied.");
 			return;
 		}
+		else
+		{
+			char stat = 100;
+			send(sockfd,&stat,1,0);
+		}
+		
 		if(mode == binary)
 			send_binaryfile(sockfd,buff,parm);
 		else
@@ -171,6 +177,12 @@ void ftp_cmd(int sockfd, char* buff)
 					puts("Permission Denied.");
 					return;
 				}
+				else
+				{
+					char stat = 100;
+					send(sockfd,&stat,1,0);
+				}
+				
 				if(mode == binary)
 					send_binaryfile(sockfd,buff,token);
 				else
