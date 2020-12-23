@@ -142,7 +142,7 @@ void reaction(User *user, char *recved_command)
 			return;
 		}
 		char fileName[MAX];
-		sprintf(fileName, "(put)%s", parm);
+		sprintf(fileName, "%s", parm);
 		recive_binaryFile(sockfd, fileName);
 	}
 
@@ -155,7 +155,7 @@ void reaction(User *user, char *recved_command)
 		{
 			token = strtok(NULL, " ");
 			char fileName[MAX];
-			sprintf(fileName, "(mput)%s", token);
+			sprintf(fileName, "%s", token);
 			if (token)
 			{
 				char stat;
