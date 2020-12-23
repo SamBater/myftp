@@ -154,10 +154,10 @@ void reaction(User *user, char *recved_command)
 		while (token != NULL)
 		{
 			token = strtok(NULL, " ");
-			char fileName[MAX];
-			sprintf(fileName, "%s", token);
 			if (token)
 			{
+				char fileName[MAX];
+				sprintf(fileName, "%s", token);
 				char stat;
 				recv(sockfd, &stat, 1, 0);
 				if (stat < 0)
