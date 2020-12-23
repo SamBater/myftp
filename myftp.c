@@ -99,7 +99,7 @@ void ftp_cmd(int sockfd, char* buff)
 		}
 
 		char target[MAX];
-		sprintf(target,"(getb)%s",parm);
+		sprintf(target,"%s",parm);
 		if(mode == binary)
 			recive_binaryFile(sockfd,target);
 		else
@@ -125,7 +125,7 @@ void ftp_cmd(int sockfd, char* buff)
 					return;
 				}
 				char target[MAX];
-				sprintf(target,"(mgetb)%s",token);
+				sprintf(target,"%s",token);
 
 				if(mode == binary)
 					recive_binaryFile(sockfd,target);
