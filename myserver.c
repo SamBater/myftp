@@ -390,8 +390,6 @@ int main()
 			pthread_t pid;
 			pthread_create(&pid, NULL, func, (void *)user);
 			pthread_detach(pid);
-			// if(fork() == 0)
-			// 	func(user);
 		}
 		else
 			printf("server acccept failed...\n");

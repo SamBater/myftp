@@ -141,10 +141,9 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
   
   char size[32];
   sprintf(size,"%lld",fileSize);
-
   //事先沟通大小.
-  send(sockfd,size,sizeof(long long),0);
-  recv(sockfd,size,2,0);
+  send(sockfd,size,31,0);
+
   long long c = 0;
   if(fileSize > 0)
   {
@@ -172,10 +171,9 @@ int recive_binaryFile(int sockfd,char *fileName)
   FILE *f = fopen(fileName,"wb");
   char buff[1024];
   char size[32];
-  recv(sockfd,size,sizeof(long long),0);
+  recv(sockfd,size,32,0);
   long long fileSize = atoll(size) ;
   const long long fs = fileSize;
-  send(sockfd,size,sizeof(long long),0);
   long long c = 0;
   do
   {
