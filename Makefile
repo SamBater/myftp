@@ -1,5 +1,5 @@
-user = sam
-passwd = w1ww11w
+user = 
+passwd = 
 ip = 0.0.0.0
 port = 8080
 server : myserver shaderd_function.c
