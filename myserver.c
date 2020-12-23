@@ -380,6 +380,7 @@ int main()
 
 	pthread_t server;
 	pthread_create(&server, NULL, server_cmd, NULL);
+
 	while (1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
@@ -388,7 +389,7 @@ int main()
 		{
 			pthread_t pid;
 			pthread_create(&pid, NULL, func, (void *)user);
-			//func(user);
+			pthread_detach(pid);
 		}
 		else
 			printf("server acccept failed...\n");
