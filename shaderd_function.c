@@ -157,11 +157,11 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
       fileSize -= num;
       c += num;
       bzero(buffer,1024);
-      printf("process: (%lld/%lld)\n",c,fs);
+      printf("\rprocess: (%lld/%lld)",c,fs);
     } while (fileSize > 0);
     
   }
-  printf("send total %lld bytes.\n",c);
+  printf("\nsend total %lld bytes.\n",c);
   fclose(f);
   return 1;
 }
@@ -183,9 +183,9 @@ int recive_binaryFile(int sockfd,char *fileName)
     fwrite(buff,1,num,f);
     fileSize -= num;
     c += num;
-    printf("process : (%lld/%lld)\n",c,fs);
+    printf("\rprocess : (%lld/%lld)",c,fs);
   } while (fileSize > 0);
-  printf("recv total %lld bytes.\n",c);
+  printf("\nrecv total %lld bytes.\n",c);
   fclose(f);
 }
 

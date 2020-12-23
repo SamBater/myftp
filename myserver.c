@@ -49,17 +49,13 @@ int CheckPassword(const char *user, const char *password)
 	}
 }
 
-void reaction(User *user, char *buff)
+void reaction(User *user, char *recved_command)
 {
-	int socofd = user->sockfd;
+	int sockfd = user->sockfd;
 	char cmd[MAX];
 	char parm[MAX];
 	char stat;
-	bzero(parm, MAX);
-	bzero(cmd, MAX);
-	int n = sscanf(buff, "%s %s", cmd, parm);
-	if (n <= 0)
-		strcpy(buff, "no such cmd.");
+	int n = sscanf(recved_command, "%s %s", cmd, parm);
 
 	if (strcmp(cmd, "binary"))
 	{
@@ -80,7 +76,7 @@ void reaction(User *user, char *buff)
 	else if (strcmp(cmd, "lrmdir") == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp, buff);
+		strcpy(tmp, recved_command);
 		char *token = strtok(tmp, " ");
 		while (token != NULL)
 		{
@@ -93,17 +89,18 @@ void reaction(User *user, char *buff)
 	}
 
 	//显示当前路径（lpwd)
-	else if (strcmp(buff, "lpwd") == 0)
+	else if (strcmp(recved_command, "lpwd") == 0)
 	{
-		if (getcwd(buff, MAX) != NULL)
+		if (getcwd(recved_command, MAX) != NULL)
 		{
+
 		}
 		else
 		{
-			strncpy(buff, "no such direction.", MAX);
+			strncpy(recved_command, "no such direction.", MAX);
 		}
 
-		send(socofd, buff, MAX, 0);
+		send(sockfd, recved_command, MAX, 0);
 	}
 	//   切换目录（lcd）、
 	else if (strcmp(cmd, "lcd") == 0)
@@ -111,12 +108,12 @@ void reaction(User *user, char *buff)
 		//strncpy(buff,"TODO:lcd",MAX);
 		if (chdir(parm) == 0)
 		{
-			bzero(buff, MAX);
+			bzero(recved_command, MAX);
 		}
 		else
 		{
-			strncpy(buff, "no such direction", MAX);
-			send(socofd, buff, MAX, 0);
+			strncpy(recved_command, "no such direction", MAX);
+			send(sockfd, recved_command, MAX, 0);
 		}
 	}
 	//   查看当前目录下的所有文件（dir）、
@@ -128,31 +125,31 @@ void reaction(User *user, char *buff)
 		{
 			char buf[255];
 			sprintf(buf, "%s", myfile->d_name);
-			send(socofd, buf, MAX, 0);
+			send(sockfd, buf, MAX, 0);
 			puts(buf);
 		}
 		char c = -100;
-		send(socofd, &c, 1, 0);
+		send(sockfd, &c, 1, 0);
 	}
 	// 	   上传单个/多个文件（put/mput）、
 
 	else if (strcmp(cmd, "put") == 0)
 	{
 		char stat;
-		recv(socofd, &stat, 1, 0);
+		recv(sockfd, &stat, 1, 0);
 		if (stat < 0)
 		{
 			return;
 		}
 		char fileName[MAX];
 		sprintf(fileName, "(put)%s", parm);
-		recive_binaryFile(socofd, fileName);
+		recive_binaryFile(sockfd, fileName);
 	}
 
 	else if (strcmp(cmd, "mput") == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp, buff);
+		strcpy(tmp, recved_command);
 		char *token = strtok(tmp, " ");
 		while (token != NULL)
 		{
@@ -162,15 +159,15 @@ void reaction(User *user, char *buff)
 			if (token)
 			{
 				char stat;
-				recv(socofd, &stat, 1, 0);
+				recv(sockfd, &stat, 1, 0);
 				if (stat < 0)
 				{
 					return;
 				}
 				if (mode == binary)
-					recive_binaryFile(socofd, fileName);
+					recive_binaryFile(sockfd, fileName);
 				else
-					receive_file(socofd, buff, fileName);
+					receive_file(sockfd, recved_command, fileName);
 			}
 		}
 	}
@@ -184,25 +181,25 @@ void reaction(User *user, char *buff)
 		if (v <= 0)
 		{
 			char stat = -100;
-			send(socofd, &stat, 1, 0);
+			send(sockfd, &stat, 1, 0);
 			return;
 		}
 		else
 		{
 			char stat = 100;
-			send(socofd, &stat, 1, 0);
+			send(sockfd, &stat, 1, 0);
 		}
 
 		//发送
 		if (mode == binary)
-			send_binaryfile(socofd, buff, parm);
+			send_binaryfile(sockfd, recved_command, parm);
 		else
-			send_file(socofd, buff, parm);
+			send_file(sockfd, recved_command, parm);
 	}
 	else if (strcmp(cmd, "mget") == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp, buff);
+		strcpy(tmp, recved_command);
 		char *token = strtok(tmp, " ");
 		//token 为parms
 		while (token != NULL)
@@ -215,25 +212,25 @@ void reaction(User *user, char *buff)
 				if (v <= 0)
 				{
 					char stat = -100;
-					send(socofd, &stat, 1, 0);
+					send(sockfd, &stat, 1, 0);
 					return;
 				}
 				else
 				{
 					char stat = 100;
-					send(socofd, &stat, 1, 0);
+					send(sockfd, &stat, 1, 0);
 				}
 				if (mode == binary)
-					send_binaryfile(socofd, buff, token);
+					send_binaryfile(sockfd, recved_command, token);
 				else
-					send_file(socofd, buff, token);
+					send_file(sockfd, recved_command, token);
 			}
 		}
 	}
 	else
 	{
-		strncpy(buff, "cmd doesn't exists.", MAX);
-		send(socofd, buff, MAX, 0);
+		strncpy(recved_command, "cmd doesn't exists.", MAX);
+		send(sockfd, recved_command, MAX, 0);
 	}
 }
 
@@ -243,12 +240,10 @@ User *detectUser_Pwd(int sockfd)
 	char user[MAX];
 	char pwd[MAX];
 	char stat;
-	bzero(buff, MAX);
-	bzero(user, MAX);
-	bzero(pwd, MAX);
 	recv(sockfd, buff, MAX, 0);
 	int n = sscanf(buff, "%s %s", user, pwd);
-	User *newUser = NULL;
+
+	User* newUser = NULL;
 	//参数检测
 	if (n < 2)
 	{
@@ -258,7 +253,7 @@ User *detectUser_Pwd(int sockfd)
 	}
 
 	//验证密码
-	if (CheckPassword(user, pwd) == 0)
+	else if (CheckPassword(user, pwd) == 0)
 	{
 		stat = ok;
 		sprintf(buff, "Welcome,you are the cilent %d\n", ++client_count_so_far);
