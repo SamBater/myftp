@@ -78,8 +78,8 @@ void ftp_cmd(int sockfd, char* buff)
 		while (1)
 		{
 			bzero(buff,MAX);
-			recv(sockfd,buff,MAX,0);
-			if(buff[0]!=-100)
+			int n = recv(sockfd,buff,MAX,0);
+			if(buff[0]!=-100 || buff[n-1] != -100)
 			{
 				puts(buff);
 			}
