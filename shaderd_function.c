@@ -175,7 +175,7 @@ int recive_binaryFile(int sockfd,char *fileName)
   recv(sockfd,size,sizeof(long long),0);
   long long fileSize = atoll(size) ;
   const long long fs = fileSize;
-  send(sockfd,size,2,0);
+  send(sockfd,size,sizeof(long long),0);
   long long c = 0;
   do
   {
