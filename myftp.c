@@ -245,8 +245,7 @@ int main(int argc, char **argv)
 	// assign IP, PORT
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = inet_addr(info->ip);
-	servaddr.sin_port = htons(8080);
-
+	servaddr.sin_port = htons(atoi(info->port));
 	extern int erron;
 	errno = 0;
 	// connect the client socket to server socket

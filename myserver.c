@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#define PORT 8080
+int PORT = 8080;
 #define SA struct sockaddr
 
 #include "shaderd_function.c"
@@ -18,7 +18,7 @@
 static int client_count_so_far = 0; //系统访客总数
 static int client_current = 0;		//活动用户总数
 trans_mode mode = binary;
-User *user_list;
+User* user_list;
 
 void addUser(User* root,User* next)
 {
@@ -42,6 +42,7 @@ void deleteUser(User* root,int sockfd)
     if(next && next->sockfd == sockfd)
     {
       tmp->next = next->next;
+	  close(next->sockfd);
       free(next);
       break;
     }
@@ -135,7 +136,7 @@ void reaction(User *user, char *recved_command)
 	}
 
 	//显示当前路径（lpwd)
-	else if (strcmp(recved_command, "lpwd") == 0)
+	else if (strcmp(cmd, "lpwd") == 0)
 	{
 		if (getcwd(recved_command, MAX) != NULL)
 		{
@@ -151,16 +152,15 @@ void reaction(User *user, char *recved_command)
 	//   切换目录（lcd）、
 	else if (strcmp(cmd, "lcd") == 0)
 	{
-		//strncpy(buff,"TODO:lcd",MAX);
 		if (chdir(parm) == 0)
 		{
-			bzero(recved_command, MAX);
+			sprintf(recved_command,"change to %s",parm);
 		}
 		else
 		{
 			strncpy(recved_command, "no such direction", MAX);
-			send(sockfd, recved_command, MAX, 0);
 		}
+		send(sockfd, recved_command, MAX, 0);
 	}
 	//   查看当前目录下的所有文件（dir）、
 	else if (strcmp(cmd, "dir") == 0)
@@ -358,7 +358,11 @@ void server_cmd()
 	{
 		char cmd[MAX];
 		printf("> ");
-		fgets(cmd,MAX,stdin);
+		//fgets(cmd,MAX,stdin);
+		gets(cmd);
+		char c[MAX];
+		char parm[MAX];
+		sscanf(cmd,"%s %s",c,parm);
 		if (strcmp(cmd, "count current") == 0)
 		{
 			printf("count current = %d \n", client_current);
@@ -371,9 +375,18 @@ void server_cmd()
 		{
 			printAllUser(user_list);
 		}
-		else if (strcmp(cmd, "kill") == 0)
+		else if (strcmp(c, "kill") == 0)
 		{
-			//
+			for(User* tmp = user_list;tmp;tmp = tmp->next)
+			{
+				if(tmp->next && strcmp(parm,tmp->next->userName) == 0)
+				{
+					close(tmp->next->sockfd);
+					tmp->next = tmp->next->next;
+					free(tmp->next);
+					return;
+				}
+			}
 		}
 		else if (strcmp(cmd, "quit") == 0)
 		{
@@ -382,12 +395,13 @@ void server_cmd()
 	}
 }
 
-int main()
+int main(int args,char** argv)
 {
+	if(args > 1) PORT = atoi(argv[1]);
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
 
-	user_list = (User *)malloc(sizeof(User));
+	user_list = (User_p)malloc(sizeof(User));
 
 	// socket create and verification
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -404,7 +418,6 @@ int main()
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port = htons(PORT);
-
 	// Binding newly created socket to given IP and verification
 	if ((bind(sockfd, (SA *)&servaddr, sizeof(servaddr))) != 0)
 	{
