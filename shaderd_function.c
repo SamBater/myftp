@@ -136,8 +136,8 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
   recv(sockfd,&passed_bytes,sizeof(long long),0);
 
   fseek(f,0,SEEK_END);
-  long long fileSize = ftell(f) ;
-  const long long remain_bytes = fileSize - passed_bytes;
+  long long fileSize = ftell(f) - passed_bytes ;
+  const long long remain_bytes =  fileSize;
   fseek(f,passed_bytes,SEEK_SET);
   if(fileSize == EOF)
     return 0;
