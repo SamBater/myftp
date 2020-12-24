@@ -131,16 +131,19 @@ size_t min(size_t a,size_t b)
 int send_binaryfile(int sockfd,char *buff,char *fileName)
 {
   FILE *f = fopen(fileName,"rb");
+
+  long long passed_bytes = 0;
+  recv(sockfd,&passed_bytes,sizeof(long long),0);
+
   fseek(f,0,SEEK_END);
   long long fileSize = ftell(f) ;
-  const long long fs = fileSize;
-  printf("filesize = %lld\n",fileSize);
-  rewind(f);
+  const long long remain_bytes = fileSize - passed_bytes;
+  fseek(f,passed_bytes,SEEK_SET);
   if(fileSize == EOF)
     return 0;
   
   char size[32];
-  sprintf(size,"%lld",fileSize);
+  sprintf(size,"%lld",remain_bytes);
   //事先沟通大小.
   send(sockfd,size,31,0);
 
@@ -156,7 +159,7 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
       fileSize -= num;
       c += num;
       bzero(buffer,sizeof(buff));
-      printf("\rprocess: (%lld/%lld)",c,fs);
+      printf("\rprocess: (%lld/%lld)",c,remain_bytes);
     } while (fileSize > 0);
     
   }
@@ -168,7 +171,15 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
 
 int recive_binaryFile(int sockfd,char *fileName)
 {
-  FILE *f = fopen(fileName,"wb");
+  FILE *f = fopen(fileName,"ab+");
+
+  //告知已经下载的bytes.
+  fseek(f,0,SEEK_END);
+  long long passed_bytes = ftell(f);
+  send(sockfd,&passed_bytes,sizeof(long long),0);
+
+  struct stat s;
+  stat(f,&s);
   char buff[SIZE];
   char size[32];
   recv(sockfd,size,31,0);
