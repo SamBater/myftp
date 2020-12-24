@@ -17,11 +17,11 @@ typedef struct
   char *port;
 } login_info;
 
-struct User;
+struct user;
 
-typedef struct User* User_p;
+typedef struct user* User_p;
 
-typedef struct
+typedef struct user
 {
   int sockfd;
   char *userName;
@@ -147,7 +147,7 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
   long long c = 0;
   if(fileSize > 0)
   {
-    char buffer[1024];
+    char buffer[SIZE];
     do
     {
       size_t num = min(fileSize,sizeof(buffer));
@@ -155,7 +155,7 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
       send(sockfd,buffer,num,0);
       fileSize -= num;
       c += num;
-      bzero(buffer,1024);
+      bzero(buffer,sizeof(buff));
       printf("\rprocess: (%lld/%lld)",c,fs);
     } while (fileSize > 0);
     
@@ -185,52 +185,4 @@ int recive_binaryFile(int sockfd,char *fileName)
   } while (fileSize > 0);
   printf("\nrecv total %lld bytes.\n",c);
   fclose(f);
-}
-
-void addUser(User* root,User* next)
-{
-  User* tmp = root;
-  while(tmp)
-  {
-    if(tmp->next == NULL)
-    {
-      tmp->next = next;
-      break;
-    }
-    tmp = tmp->next;
-  }
-}
-
-void deleteUser(User* root,int sockfd)
-{
-  for(User* tmp=root;tmp;tmp=tmp->next)
-  {
-    User *next = tmp->next;
-    if(next && next->sockfd == sockfd)
-    {
-      tmp->next = next->next;
-      free(next);
-      break;
-    }
-  }
-}
-
-void printAllUser(User* root)
-{
-  for(User* tmp = root->next;tmp;tmp=tmp->next)
-  {
-    printf("%s\t",tmp->userName);
-  }
-  puts("");
-}
-
-void quit(User* root)
-{
-      puts("yes");
-  for(User* tmp=root->next;tmp;tmp=tmp->next)
-  {
-    shutdown(tmp->sockfd,SHUT_RDWR);
-    close(tmp->sockfd);
-  }
-  exit(0);
 }

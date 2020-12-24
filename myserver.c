@@ -20,6 +20,52 @@ static int client_current = 0;		//活动用户总数
 trans_mode mode = binary;
 User *user_list;
 
+void addUser(User* root,User* next)
+{
+  User* tmp = root;
+  while(tmp)
+  {
+    if(tmp->next == NULL)
+    {
+      tmp->next = next;
+      break;
+    }
+    tmp = tmp->next;
+  }
+}
+
+void deleteUser(User* root,int sockfd)
+{
+  for(User* tmp=root;tmp;tmp=tmp->next)
+  {
+    User *next = tmp->next;
+    if(next && next->sockfd == sockfd)
+    {
+      tmp->next = next->next;
+      free(next);
+      break;
+    }
+  }
+}
+
+void printAllUser(User* root)
+{
+  for(User* tmp = root->next;tmp;tmp=tmp->next)
+  {
+    printf("%s\t",tmp->userName);
+  }
+  puts("");
+}
+
+void quit(User_p root)
+{
+  for(User_p tmp=root->next;tmp;tmp=tmp->next)
+  {
+    close(tmp->sockfd);
+  }
+  exit(0);
+}
+
 /// @return 0 - password is correct, otherwise no need root permision
 int CheckPassword(const char *user, const char *password)
 {
@@ -312,7 +358,7 @@ void server_cmd()
 	{
 		char cmd[MAX];
 		printf("> ");
-		gets(cmd);
+		fgets(cmd,MAX,stdin);
 		if (strcmp(cmd, "count current") == 0)
 		{
 			printf("count current = %d \n", client_current);

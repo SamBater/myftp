@@ -204,7 +204,7 @@ void func(int sockfd)
 	while (1)
 	{
 		putchar('>');
-		gets(buff);
+		fgets(buff,MAX,stdin);
 		int n = send(sockfd, buff, MAX, 0);
 		if(strncmp(buff,"quit",4) == 0 || n <= 0) break;
 		
