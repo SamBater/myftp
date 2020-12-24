@@ -169,9 +169,9 @@ int send_binaryfile(int sockfd,char *buff,char *fileName)
 int recive_binaryFile(int sockfd,char *fileName)
 {
   FILE *f = fopen(fileName,"wb");
-  char buff[1024];
+  char buff[SIZE];
   char size[32];
-  recv(sockfd,size,32,0);
+  recv(sockfd,size,31,0);
   long long fileSize = atoll(size) ;
   const long long fs = fileSize;
   long long c = 0;
