@@ -188,6 +188,7 @@ int recive_binaryFile(int sockfd,char *fileName)
   long long c = 0;
   do
   {
+    if(fileSize <= 0) break;
     size_t num = recv(sockfd,buff,min(fileSize,sizeof(buff)),0);
     fwrite(buff,1,num,f);
     fileSize -= num;

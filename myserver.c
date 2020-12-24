@@ -9,7 +9,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
+#define MAX 255
 int PORT = 8080;
 #define SA struct sockaddr
 
@@ -25,7 +25,7 @@ void addUser(User* root,User* next)
   User* tmp = root;
   while(tmp)
   {
-    if(tmp->next == NULL)
+    if(tmp->next == 0)
     {
       tmp->next = next;
       break;
@@ -289,7 +289,7 @@ User *detectUser_Pwd(int sockfd)
 	recv(sockfd, buff, MAX, 0);
 	int n = sscanf(buff, "%s %s", user, pwd);
 
-	User* newUser = NULL;
+	User* newUser = 0;
 	//参数检测
 	if (n < 2)
 	{
