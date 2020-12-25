@@ -304,19 +304,19 @@ void server_cmd(User *user_list)
 	{
 		char cmd[MAX];
 		printf("> ");
-		fgets(cmd, MAX, stdin);
+		fgets(cmd,MAX,stdin);
 		char c[MAX];
 		char parm[MAX];
 		sscanf(cmd, "%s %s", c, parm);
-		if (strcmp(cmd, "count current") == 0)
+		if (strncmp(cmd, "count current",13) == 0)
 		{
 			printf("count current = %d \n", client_current);
 		}
-		else if (strcmp(cmd, "count all") == 0)
+		else if (strncmp(cmd, "count all",9) == 0)
 		{
 			printf("count all = %d \n", client_count_so_far);
 		}
-		else if (strcmp(c, "list") == 0)
+		else if (strncmp(c, "list",4) == 0)
 		{
 			printAllUser(user_list);
 		}
@@ -335,8 +335,9 @@ void server_cmd(User *user_list)
 			// 	}
 			// }
 		}
-		else if (strcmp(cmd, "quit") == 0)
+		else if (strcmp(c, "quit") == 0)
 		{
+			exit(0);
 			quit(user_list);
 		}
 	}

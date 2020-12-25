@@ -53,12 +53,12 @@ void ftp_cmd(int sockfd, char *buff)
 	bzero(cmd, MAX);
 	bzero(parm, MAX);
 	sscanf(buff, "%s %s", cmd, parm);
-	if (strcmp(cmd, "binary") == 0)
+	if (strncmp(cmd, "binary",6) == 0)
 	{
 		mode = binary;
 	}
 
-	else if (strcmp(cmd, "ascii") == 0)
+	else if (strncmp(cmd, "ascii",5) == 0)
 	{
 		mode = ascii;
 	}
@@ -73,7 +73,7 @@ void ftp_cmd(int sockfd, char *buff)
 		//在Main loop中已发送.
 	}
 
-	else if (strcmp(cmd, "dir") == 0)
+	else if (strncmp(cmd, "dir",3) == 0)
 	{
 		while (1)
 		{
