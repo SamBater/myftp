@@ -94,6 +94,7 @@ void send_bfile(int sockfd, char *fileName)
       c += num;
       bzero(buffer, sizeof(buffer));
       printf("\rprocess: (%ld/%ld)", c, remain_bytes);
+      fflush(stdout);
     } while (fileSize > 0);
   }
   printf("\nsend total %ld bytes.\n", c);
