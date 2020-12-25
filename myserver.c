@@ -118,7 +118,7 @@ void reaction(User *user, char *recved_command)
 	// 创建/删除目录（lmkdir/lrmdir）、
 	if (strncmp(cmd, "lmdir", 5) == 0)
 	{
-		mkdir(parm, 777);
+		mkdir(parm, 755);
 	}
 
 	else if (strcmp(cmd, "lrmdir") == 0)
@@ -131,7 +131,7 @@ void reaction(User *user, char *recved_command)
 			token = strtok(NULL, " ");
 			if (token)
 			{
-				mkdir(token, 777);
+				mkdir(token, 755);
 			}
 		}
 	}
@@ -173,7 +173,6 @@ void reaction(User *user, char *recved_command)
 			char buf[255];
 			sprintf(buf, "%s", myfile->d_name);
 			send(sockfd, buf, MAX, 0);
-			puts(buf);
 		}
 		char c = -100;
 		send(sockfd, &c, 1, 0);

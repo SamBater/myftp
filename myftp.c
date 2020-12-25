@@ -81,11 +81,12 @@ void ftp_cmd(int sockfd, char* buff)
 			int n = recv(sockfd,buff,MAX,0);
 			if(buff[0]!=-100 || buff[n-1] != -100)
 			{
-				puts(buff);
+				printf("%s\t",buff);
 			}
 			else
 				break;
 		}
+		puts("");
 	}
 
 	else if(strncmp(buff,"get",3) == 0)
