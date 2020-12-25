@@ -48,38 +48,6 @@ void client_usage()
   printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
 }
 
-mode_t vaild_acess(char *path, int uid, int gid)
-{
-  struct stat ret;
-  stat(path, &ret);
-
-  if (uid == ret.st_uid) //
-  {
-    return (ret.st_mode & S_IRUSR) |
-           (ret.st_mode & S_IWUSR) |
-           (ret.st_mode & S_IXUSR);
-  }
-  else if (gid == ret.st_gid)
-  {
-    return (ret.st_mode & S_IRGRP) |
-           (ret.st_mode & S_IWGRP) |
-           (ret.st_mode & S_IXGRP);
-  }
-  return (ret.st_mode & S_IROTH) |
-         (ret.st_mode & S_IWOTH) |
-         (ret.st_mode & S_IXOTH);
-}
-
-int readAble(mode_t t)
-{
-  return (t & S_IRUSR) | (t & S_IRGRP) | (t & S_IROTH);
-}
-
-int writeAble(mode_t t)
-{
-  return (t & S_IWUSR) | (t & S_IWGRP) | (t & S_IWOTH);
-}
-
 void send_file(int sockfd, char *buff, char *fileName)
 {
   FILE *f = fopen(fileName, "r+");
@@ -124,7 +92,7 @@ size_t min(size_t a, size_t b)
   return a > b ? b : a;
 }
 
-int send_binaryfile(int sockfd, char *buff, char *fileName)
+void send_binaryfile(int sockfd, char *buff, char *fileName)
 {
   FILE *f = fopen(fileName, "rb");
 
@@ -133,7 +101,8 @@ int send_binaryfile(int sockfd, char *buff, char *fileName)
   {
     stat = 0;
     send(sockfd, &stat, 1, 0);
-    return;
+    puts("No such file or permission dined.");
+    return ;
   }
   send(sockfd, &stat, 1, 0);
 
@@ -160,7 +129,7 @@ int send_binaryfile(int sockfd, char *buff, char *fileName)
     do
     {
       size_t num = min(fileSize, sizeof(buffer));
-      fread(buffer, 1, num, f);
+      fread(buffer, num, 1, f);
       send(sockfd, buffer, num, 0);
       fileSize -= num;
       c += num;
@@ -173,7 +142,7 @@ int send_binaryfile(int sockfd, char *buff, char *fileName)
   return 1;
 }
 
-int recive_binaryFile(int sockfd, char *fileName)
+void recive_binaryFile(int sockfd, char *fileName)
 {
   char st = 1;
   recv(sockfd, &st, 1, 0);
@@ -202,7 +171,7 @@ int recive_binaryFile(int sockfd, char *fileName)
     if (fileSize <= 0)
       break;
     size_t num = recv(sockfd, buff, min(fileSize, sizeof(buff)), 0);
-    fwrite(buff, 1, num, f);
+    fwrite(buff, num, 1, f);
     fileSize -= num;
     c += num;
     printf("\rprocess : (%lld/%lld)", c, fs);
