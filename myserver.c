@@ -182,15 +182,7 @@ void reaction(User *user, char *recved_command)
 
 	else if (strcmp(cmd, "put") == 0)
 	{
-		char stat;
-		recv(sockfd, &stat, 1, 0);
-		if (stat < 0)
-		{
-			return;
-		}
-		char fileName[MAX];
-		sprintf(fileName, "%s", parm);
-		recive_binaryFile(sockfd, fileName);
+		recive_binaryFile(sockfd, parm);
 	}
 
 	else if (strcmp(cmd, "mput") == 0)
@@ -203,18 +195,10 @@ void reaction(User *user, char *recved_command)
 			token = strtok(NULL, " ");
 			if (token)
 			{
-				char fileName[MAX];
-				sprintf(fileName, "%s", token);
-				char stat;
-				recv(sockfd, &stat, 1, 0);
-				if (stat < 0)
-				{
-					return;
-				}
 				if (mode == binary)
-					recive_binaryFile(sockfd, fileName);
+					recive_binaryFile(sockfd, token);
 				else
-					receive_file(sockfd, recved_command, fileName);
+					receive_file(sockfd, recved_command, token);
 			}
 		}
 	}
@@ -222,21 +206,6 @@ void reaction(User *user, char *recved_command)
 	//    下载单个/多个文件（get/mget）。
 	else if (strcmp(cmd, "get") == 0)
 	{
-		//检测权限
-		mode_t v = vaild_acess(parm, user->uid, user->gid);
-		v = readAble(v);
-		if (v <= 0)
-		{
-			char stat = -100;
-			send(sockfd, &stat, 1, 0);
-			return;
-		}
-		else
-		{
-			char stat = 100;
-			send(sockfd, &stat, 1, 0);
-		}
-
 		//发送
 		if (mode == binary)
 			send_binaryfile(sockfd, recved_command, parm);
@@ -254,19 +223,6 @@ void reaction(User *user, char *recved_command)
 			token = strtok(NULL, " ");
 			if (token)
 			{
-				mode_t v = vaild_acess(token, user->uid, user->gid);
-				v = readAble(v);
-				if (v <= 0)
-				{
-					char stat = -100;
-					send(sockfd, &stat, 1, 0);
-					return;
-				}
-				else
-				{
-					char stat = 100;
-					send(sockfd, &stat, 1, 0);
-				}
 				if (mode == binary)
 					send_binaryfile(sockfd, recved_command, token);
 				else

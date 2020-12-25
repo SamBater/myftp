@@ -19,7 +19,7 @@ typedef struct
 
 struct user;
 
-typedef struct user* User_p;
+typedef struct user *User_p;
 
 typedef struct user
 {
@@ -28,8 +28,7 @@ typedef struct user
   int uid;
   int gid;
   User_p next;
-}User;
-
+} User;
 
 typedef enum
 {
@@ -42,41 +41,38 @@ typedef enum
 {
   binary,
   ascii
-}trans_mode;
+} trans_mode;
 
 void client_usage()
 {
   printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
 }
 
-mode_t vaild_acess(char *path,int uid,int gid)
+mode_t vaild_acess(char *path, int uid, int gid)
 {
   struct stat ret;
-  stat(path,&ret);
+  stat(path, &ret);
 
-  if(uid == ret.st_uid)   //
+  if (uid == ret.st_uid) //
   {
-      return 
-      (ret.st_mode & S_IRUSR) |
-      (ret.st_mode & S_IWUSR) |
-      (ret.st_mode & S_IXUSR); 
+    return (ret.st_mode & S_IRUSR) |
+           (ret.st_mode & S_IWUSR) |
+           (ret.st_mode & S_IXUSR);
   }
-  else if(gid == ret.st_gid)
+  else if (gid == ret.st_gid)
   {
-      return
-      (ret.st_mode & S_IRGRP) |
-      (ret.st_mode & S_IWGRP) |
-      (ret.st_mode & S_IXGRP); 
+    return (ret.st_mode & S_IRGRP) |
+           (ret.st_mode & S_IWGRP) |
+           (ret.st_mode & S_IXGRP);
   }
-  return 
-  (ret.st_mode & S_IROTH) |
-  (ret.st_mode & S_IWOTH) |
-  (ret.st_mode & S_IXOTH);
+  return (ret.st_mode & S_IROTH) |
+         (ret.st_mode & S_IWOTH) |
+         (ret.st_mode & S_IXOTH);
 }
 
 int readAble(mode_t t)
 {
-  return (t & S_IRUSR) | (t & S_IRGRP) | (t & S_IROTH) ; 
+  return (t & S_IRUSR) | (t & S_IRGRP) | (t & S_IROTH);
 }
 
 int writeAble(mode_t t)
@@ -119,82 +115,98 @@ void receive_file(int sockfd, char *buff, char *fileName)
   }
   fclose(f);
   puts("get done");
-  strcpy(buff,"put complete");
-  send(sockfd,buff,MAX,0);
+  strcpy(buff, "put complete");
+  send(sockfd, buff, MAX, 0);
 }
 
-size_t min(size_t a,size_t b)
+size_t min(size_t a, size_t b)
 {
-  return a>b?b : a;
+  return a > b ? b : a;
 }
 
-int send_binaryfile(int sockfd,char *buff,char *fileName)
+int send_binaryfile(int sockfd, char *buff, char *fileName)
 {
-  FILE *f = fopen(fileName,"rb");
+  FILE *f = fopen(fileName, "rb");
+
+  char stat = 1;
+  if (f == NULL)
+  {
+    stat = 0;
+    send(sockfd, &stat, 1, 0);
+    return;
+  }
+  send(sockfd, &stat, 1, 0);
+
 
   long long passed_bytes = 0;
-  recv(sockfd,&passed_bytes,sizeof(long long),0);
+  recv(sockfd, &passed_bytes, sizeof(long long), 0);
 
-  fseek(f,0,SEEK_END);
-  long long fileSize = ftell(f) - passed_bytes ;
-  const long long remain_bytes =  fileSize;
-  fseek(f,passed_bytes,SEEK_SET);
-  if(fileSize == EOF)
+  fseek(f, 0, SEEK_END);
+  long long fileSize = ftell(f) - passed_bytes;
+  const long long remain_bytes = fileSize;
+  fseek(f, passed_bytes, SEEK_SET);
+  if (fileSize == EOF)
     return 0;
-  
+
   char size[32];
-  sprintf(size,"%lld",remain_bytes);
+  sprintf(size, "%lld", remain_bytes);
   //事先沟通大小.
-  send(sockfd,size,31,0);
+  send(sockfd, size, 31, 0);
 
   long long c = 0;
-  if(fileSize > 0)
+  if (fileSize > 0)
   {
     char buffer[SIZE];
     do
     {
-      size_t num = min(fileSize,sizeof(buffer));
-      fread(buffer,1,num,f);
-      send(sockfd,buffer,num,0);
+      size_t num = min(fileSize, sizeof(buffer));
+      fread(buffer, 1, num, f);
+      send(sockfd, buffer, num, 0);
       fileSize -= num;
       c += num;
-      bzero(buffer,sizeof(buff));
-      printf("\rprocess: (%lld/%lld)",c,remain_bytes);
+      bzero(buffer, sizeof(buff));
+      printf("\rprocess: (%lld/%lld)", c, remain_bytes);
     } while (fileSize > 0);
-    
   }
-  printf("\nsend total %lld bytes.\n",c);
+  printf("\nsend total %lld bytes.\n", c);
   fclose(f);
   return 1;
 }
 
-
-int recive_binaryFile(int sockfd,char *fileName)
+int recive_binaryFile(int sockfd, char *fileName)
 {
-  FILE *f = fopen(fileName,"ab+");
+  char st = 1;
+  recv(sockfd, &st, 1, 0);
+  if (st == 0)
+  {
+    puts("No such file or permission dined.");
+    return;
+  }
+
+  FILE *f = fopen(fileName, "ab+");
 
   //告知已经下载的bytes.
-  fseek(f,0,SEEK_END);
+  fseek(f, 0, SEEK_END);
   long long passed_bytes = ftell(f);
-  send(sockfd,&passed_bytes,sizeof(long long),0);
+  send(sockfd, &passed_bytes, sizeof(long long), 0);
 
   struct stat s;
-  stat(f,&s);
   char buff[SIZE];
   char size[32];
-  recv(sockfd,size,31,0);
-  long long fileSize = atoll(size) ;
+  recv(sockfd, size, 31, 0);
+  long long fileSize = atoll(size);
   const long long fs = fileSize;
   long long c = 0;
   do
   {
-    if(fileSize <= 0) break;
-    size_t num = recv(sockfd,buff,min(fileSize,sizeof(buff)),0);
-    fwrite(buff,1,num,f);
+    if (fileSize <= 0)
+      break;
+    size_t num = recv(sockfd, buff, min(fileSize, sizeof(buff)), 0);
+    fwrite(buff, 1, num, f);
     fileSize -= num;
     c += num;
-    printf("\rprocess : (%lld/%lld)",c,fs);
+    printf("\rprocess : (%lld/%lld)", c, fs);
   } while (fileSize > 0);
-  printf("\nrecv total %lld bytes.\n",c);
+  printf("\nrecv total %lld bytes.\n", c);
   fclose(f);
 }

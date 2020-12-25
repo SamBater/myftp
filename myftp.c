@@ -90,20 +90,10 @@ void ftp_cmd(int sockfd, char* buff)
 
 	else if(strncmp(buff,"get",3) == 0)
 	{
-		char stat;
-		recv(sockfd,&stat,1,0);
-		if(stat < 0 )
-		{
-			puts("Permission Denied.");
-			return;
-		}
-
-		char target[MAX];
-		sprintf(target,"%s",parm);
 		if(mode == binary)
-			recive_binaryFile(sockfd,target);
+			recive_binaryFile(sockfd,parm);
 		else
-			receive_file(sockfd,buff,target);
+			receive_file(sockfd,buff,parm);
 	}
 
 	else if(strncmp(buff,"mget",4) == 0)
@@ -117,41 +107,16 @@ void ftp_cmd(int sockfd, char* buff)
 			token = strtok(NULL," ");
 			if(token) 
 			{
-				char stat;
-				recv(sockfd,&stat,1,0);
-				if(stat < 0 )
-				{
-					puts("Permission Denied.");
-					return;
-				}
-				char target[MAX];
-				sprintf(target,"%s",token);
-
 				if(mode == binary)
-					recive_binaryFile(sockfd,target);
+					recive_binaryFile(sockfd,token);
 				else
-					receive_file(sockfd,buff,target);
+					receive_file(sockfd,buff,token);
 			}
 		}
 	}
 
 	else if(strncmp(buff,"put",3) == 0)
-	{
-		mode_t v = vaild_acess(parm,getuid(),getgid());
-		v = writeAble(v);
-		if(v <= 0)
-		{
-			char stat = -100;
-			send(sockfd,&stat,1,0);
-			puts("Permission Denied.");
-			return;
-		}
-		else
-		{
-			char stat = 100;
-			send(sockfd,&stat,1,0);
-		}
-		
+	{		
 		if(mode == binary)
 			send_binaryfile(sockfd,buff,parm);
 		else
@@ -167,22 +132,7 @@ void ftp_cmd(int sockfd, char* buff)
 		{
 			token = strtok(NULL," ");
 			if(token) 
-			{
-				mode_t v = vaild_acess(token,getuid(),getgid());
-				v = writeAble(v);
-				if(v <= 0)
-				{
-					char stat = -100;
-					send(sockfd,&stat,1,0);
-					puts("Permission Denied.");
-					return;
-				}
-				else
-				{
-					char stat = 100;
-					send(sockfd,&stat,1,0);
-				}
-				
+			{				
 				if(mode == binary)
 					send_binaryfile(sockfd,buff,token);
 				else
