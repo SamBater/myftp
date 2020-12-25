@@ -9,6 +9,9 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/prctl.h>
+#include <signal.h>
+#include <sys/mman.h>
 #define MAX 255
 int PORT = 8080;
 #define SA struct sockaddr
@@ -18,20 +21,18 @@ int PORT = 8080;
 static int client_count_so_far = 0; //系统访客总数
 static int client_current = 0;		//活动用户总数
 trans_mode mode = binary;
-User* user_list;
+
 
 void addUser(User* root,User* next)
 {
-  User* tmp = root;
-  while(tmp)
-  {
-    if(tmp->next == 0)
-    {
-      tmp->next = next;
-      break;
-    }
-    tmp = tmp->next;
-  }
+	for(User* tmp = root;tmp;tmp = tmp->next)
+	{
+		if(tmp->next == NULL)
+		{
+			tmp->next = next;
+			break;
+		}
+	}
 }
 
 void deleteUser(User* root,int sockfd)
@@ -311,8 +312,7 @@ User *detectUser_Pwd(int sockfd)
 		newUser->userName = user;
 		newUser->uid = getpwnam(user)->pw_uid;
 		newUser->gid = getpwnam(user)->pw_gid;
-		printf("addUser\nuid = %d\tpid = %d\t name = %s\n", newUser->uid, newUser->gid, newUser->userName);
-		addUser(user_list, newUser);
+		printf("\naddUser\nuid = %d\tpid = %d\t name = %s\n", newUser->uid, newUser->gid, newUser->userName);
 	}
 	else
 	{
@@ -331,7 +331,8 @@ void func(User *user)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
-
+	setuid(user->uid);
+	setgid(user->gid);
 	int sockfd = user->sockfd;
 	while (1)
 	{
@@ -341,9 +342,6 @@ void func(User *user)
 		reaction(user, buff);
 		bzero(buff, sizeof(buff));
 	}
-	deleteUser(user_list, sockfd);
-	close(sockfd);
-	client_current--;
 }
 /*
 count current 当前活动用户数 退出时减1
@@ -352,7 +350,7 @@ list 显示当前在线的所有用户的用户名 连接后缓存下来 退出�
 kill username 强制删除某个用户 删除用户命令
 quit 关闭ftp
 */
-void server_cmd()
+void server_cmd(User* user_list)
 {
 	while (1)
 	{
@@ -371,22 +369,24 @@ void server_cmd()
 		{
 			printf("count all = %d \n", client_count_so_far);
 		}
-		else if (strcmp(cmd, "list") == 0)
+		else if (strcmp(c, "list") == 0)
 		{
 			printAllUser(user_list);
 		}
 		else if (strcmp(c, "kill") == 0)
 		{
-			for(User* tmp = user_list;tmp;tmp = tmp->next)
-			{
-				if(tmp->next && strcmp(parm,tmp->next->userName) == 0)
-				{
-					close(tmp->next->sockfd);
-					tmp->next = tmp->next->next;
-					free(tmp->next);
-					return;
-				}
-			}
+			// TODO : 删除用户
+			// for(User* tmp = user_list;tmp;tmp = tmp->next)
+			// {
+			// 	User* next = tmp->next;
+			// 	if(next && strcmp(parm,next->userName) == 0)
+			// 	{
+			// 		tmp->next = next->next;
+			// 		close(next->sockfd);
+			// 		free(next);
+			// 		break;
+			// 	}
+			// }
 		}
 		else if (strcmp(cmd, "quit") == 0)
 		{
@@ -401,7 +401,7 @@ int main(int args,char** argv)
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
 
-	user_list = (User_p)malloc(sizeof(User));
+	User* user_list = (User_p)malloc(sizeof(User));
 
 	// socket create and verification
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -438,17 +438,31 @@ int main(int args,char** argv)
 	len = sizeof(cli);
 
 	pthread_t server;
-	pthread_create(&server, NULL, server_cmd, NULL);
+	pthread_create(&server, NULL, server_cmd, user_list);
 
 	while (1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
-		User *user = NULL;
-		if (connfd > 0 && (user = detectUser_Pwd(connfd)))
+		printf("parent uid = %d \n",getuid());
+		User *newUser = NULL;
+		if (connfd > 0 && (newUser = detectUser_Pwd(connfd)))
 		{
-			pthread_t pid;
-			pthread_create(&pid, NULL, func, (void *)user);
-			pthread_detach(pid);
+			addUser(user_list, newUser);
+			printAllUser(user_list);
+			int child_quit = 0;
+			if(fork() == 0)
+			{
+				prctl(PR_SET_PDEATHSIG,SIGKILL);
+				func(newUser);
+				deleteUser(user_list, sockfd);
+				close(sockfd);
+				child_quit = 1;
+			}
+			if(child_quit) 
+			{
+				client_current--;
+				exit(0);
+			}
 		}
 		else
 			printf("server acccept failed...\n");
