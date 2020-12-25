@@ -29,59 +29,59 @@ login_info *check_cmd(char *argv)
 	return NULL;
 }
 
-int login(int sockfd,login_info* info)
+int login(int sockfd, login_info *info)
 {
 	char buff[MAX];
 	bzero(buff, MAX);
 	sprintf(buff, "%s %s", info->user, info->pwd);
 	//写入用户、明码 然后等待显示服务器响应.
 	send(sockfd, buff, sizeof(buff), 0);
-	bzero(buff,MAX);
+	bzero(buff, MAX);
 	char stat;
-	read(sockfd,&stat,1);
+	read(sockfd, &stat, 1);
 	recv(sockfd, buff, MAX, 0);
 	puts(buff);
 	return stat;
 	//TODO:错误时退出.
 }
 
-void ftp_cmd(int sockfd, char* buff)
+void ftp_cmd(int sockfd, char *buff)
 {
 	char stat;
 	char cmd[MAX];
 	char parm[MAX];
-	bzero(cmd,MAX);
-	bzero(parm,MAX);
-	sscanf(buff,"%s %s",cmd,parm);
-	if(strcmp(cmd,"binary") == 0)
+	bzero(cmd, MAX);
+	bzero(parm, MAX);
+	sscanf(buff, "%s %s", cmd, parm);
+	if (strcmp(cmd, "binary") == 0)
 	{
 		mode = binary;
 	}
 
-	else if(strcmp(cmd,"ascii") ==0)
+	else if (strcmp(cmd, "ascii") == 0)
 	{
 		mode = ascii;
 	}
 
-	else if(strncmp(cmd,"lmdir",5) == 0)
+	else if (strncmp(cmd, "lmdir", 5) == 0)
 	{
 		//在main loop中已发送
 	}
 
-	else if(strncmp(cmd,"lrmdir",6) == 0)
+	else if (strncmp(cmd, "lrmdir", 6) == 0)
 	{
 		//在Main loop中已发送.
 	}
 
-	else if(strcmp(cmd,"dir") == 0)
+	else if (strcmp(cmd, "dir") == 0)
 	{
 		while (1)
 		{
-			bzero(buff,MAX);
-			int n = recv(sockfd,buff,MAX,0);
-			if(buff[0]!=-100 || buff[n-1] != -100)
+			bzero(buff, MAX);
+			int n = recv(sockfd, buff, MAX, 0);
+			if (buff[0] != -100 || buff[n - 1] != -100)
 			{
-				printf("%s\t",buff);
+				printf("%s\t", buff);
 			}
 			else
 				break;
@@ -89,61 +89,52 @@ void ftp_cmd(int sockfd, char* buff)
 		puts("");
 	}
 
-	else if(strncmp(buff,"get",3) == 0)
+	else if (strncmp(buff, "get", 3) == 0)
 	{
-		if(mode == binary)
-			recv_bfile(sockfd,parm);
-		else
-			recv_file(sockfd,parm);
+
+		recv_bfile(sockfd, parm);
 	}
 
-	else if(strncmp(buff,"mget",4) == 0)
+	else if (strncmp(buff, "mget", 4) == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp,buff);
-		char * token = strtok(tmp," ");
+		strcpy(tmp, buff);
+		char *token = strtok(tmp, " ");
 		//token 为parms
-		while(token !=NULL)
+		while (token != NULL)
 		{
-			token = strtok(NULL," ");
-			if(token) 
+			token = strtok(NULL, " ");
+			if (token)
 			{
-				if(mode == binary)
-					recv_bfile(sockfd,token);
-				else
-					recv_file(sockfd,token);
+
+				recv_bfile(sockfd, token);
 			}
 		}
 	}
 
-	else if(strncmp(buff,"put",3) == 0)
-	{		
-		if(mode == binary)
-			send_bfile(sockfd,buff,parm);
-		else
-			send_file(sockfd,buff,parm);
+	else if (strncmp(buff, "put", 3) == 0)
+	{
+
+		send_bfile(sockfd, parm);
 	}
-	else if(strncmp(buff,"mput",4) == 0)
+	else if (strncmp(buff, "mput", 4) == 0)
 	{
 		char tmp[MAX];
-		strcpy(tmp,buff);
-		char * token = strtok(tmp," ");
+		strcpy(tmp, buff);
+		char *token = strtok(tmp, " ");
 		//token 为parms
-		while(token !=NULL)
+		while (token != NULL)
 		{
-			token = strtok(NULL," ");
-			if(token) 
-			{				
-				if(mode == binary)
-					send_bfile(sockfd,buff,token);
-				else
-					send_file(sockfd,buff,token);
+			token = strtok(NULL, " ");
+			if (token)
+			{
+				send_bfile(sockfd, token);
 			}
 		}
 	}
 	else
 	{
-		recv(sockfd,buff,MAX,0);
+		recv(sockfd, buff, MAX, 0);
 		puts(buff);
 	}
 }
@@ -155,10 +146,11 @@ void func(int sockfd)
 	while (1)
 	{
 		putchar('>');
-		fgets(buff,MAX,stdin);
+		fgets(buff, MAX, stdin);
 		int n = send(sockfd, buff, MAX, 0);
-		if(strncmp(buff,"quit",4) == 0 || n <= 0) break;
-		
+		if (strncmp(buff, "quit", 4) == 0 || n <= 0)
+			break;
+
 		ftp_cmd(sockfd, buff);
 		bzero(buff, sizeof(buff));
 	}
@@ -209,8 +201,7 @@ int main(int argc, char **argv)
 	else
 		printf("connected to the server..\n");
 
-	
-	if(login(sockfd,info) == ok)
+	if (login(sockfd, info) == ok)
 		func(sockfd);
 
 	// close the socket

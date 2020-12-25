@@ -22,12 +22,11 @@ static int client_count_so_far = 0; //系统访客总数
 static int client_current = 0;		//活动用户总数
 trans_mode mode = binary;
 
-
-void addUser(User* root,User* next)
+void addUser(User *root, User *next)
 {
-	for(User* tmp = root;tmp;tmp = tmp->next)
+	for (User *tmp = root; tmp; tmp = tmp->next)
 	{
-		if(tmp->next == NULL)
+		if (tmp->next == NULL)
 		{
 			tmp->next = next;
 			break;
@@ -35,37 +34,37 @@ void addUser(User* root,User* next)
 	}
 }
 
-void deleteUser(User* root,int sockfd)
+void deleteUser(User *root, int sockfd)
 {
-  for(User* tmp=root;tmp;tmp=tmp->next)
-  {
-    User *next = tmp->next;
-    if(next && next->sockfd == sockfd)
-    {
-      tmp->next = next->next;
-	  close(next->sockfd);
-      free(next);
-      break;
-    }
-  }
+	for (User *tmp = root; tmp; tmp = tmp->next)
+	{
+		User *next = tmp->next;
+		if (next && next->sockfd == sockfd)
+		{
+			tmp->next = next->next;
+			close(next->sockfd);
+			free(next);
+			break;
+		}
+	}
 }
 
-void printAllUser(User* root)
+void printAllUser(User *root)
 {
-  for(User* tmp = root->next;tmp;tmp=tmp->next)
-  {
-    printf("%s\t",tmp->userName);
-  }
-  puts("");
+	for (User *tmp = root->next; tmp; tmp = tmp->next)
+	{
+		printf("%s\t", tmp->userName);
+	}
+	puts("");
 }
 
 void quit(User_p root)
 {
-  for(User_p tmp=root->next;tmp;tmp=tmp->next)
-  {
-    close(tmp->sockfd);
-  }
-  exit(0);
+	for (User_p tmp = root->next; tmp; tmp = tmp->next)
+	{
+		close(tmp->sockfd);
+	}
+	exit(0);
 }
 
 /// @return 0 - password is correct, otherwise no need root permision
@@ -141,7 +140,6 @@ void reaction(User *user, char *recved_command)
 	{
 		if (getcwd(recved_command, MAX) != NULL)
 		{
-
 		}
 		else
 		{
@@ -155,7 +153,7 @@ void reaction(User *user, char *recved_command)
 	{
 		if (chdir(parm) == 0)
 		{
-			sprintf(recved_command,"change to %s",parm);
+			sprintf(recved_command, "change to %s", parm);
 		}
 		else
 		{
@@ -181,10 +179,8 @@ void reaction(User *user, char *recved_command)
 
 	else if (strcmp(cmd, "put") == 0)
 	{
-		if(mode == binary)
-			recv_bfile(sockfd, parm);
-		else
-			recv_file(sockfd,parm);
+
+		recv_bfile(sockfd, parm);
 	}
 
 	else if (strcmp(cmd, "mput") == 0)
@@ -197,10 +193,8 @@ void reaction(User *user, char *recved_command)
 			token = strtok(NULL, " ");
 			if (token)
 			{
-				if (mode == binary)
-					recv_bfile(sockfd, token);
-				else
-					recv_file(sockfd, token);
+
+				recv_bfile(sockfd, token);
 			}
 		}
 	}
@@ -209,10 +203,8 @@ void reaction(User *user, char *recved_command)
 	else if (strcmp(cmd, "get") == 0)
 	{
 		//发送
-		if (mode == binary)
-			send_bfile(sockfd, parm);
-		else
-			send_file(sockfd, parm);
+
+		send_bfile(sockfd, parm);
 	}
 	else if (strcmp(cmd, "mget") == 0)
 	{
@@ -225,10 +217,8 @@ void reaction(User *user, char *recved_command)
 			token = strtok(NULL, " ");
 			if (token)
 			{
-				if (mode == binary)
-					send_bfile(sockfd, token);
-				else
-					send_file(sockfd, token);
+
+				send_bfile(sockfd, token);
 			}
 		}
 	}
@@ -248,7 +238,7 @@ User *detectUser_Pwd(int sockfd)
 	recv(sockfd, buff, MAX, 0);
 	int n = sscanf(buff, "%s %s", user, pwd);
 
-	User* newUser = 0;
+	User *newUser = 0;
 	//参数检测
 	if (n < 2)
 	{
@@ -308,16 +298,16 @@ list 显示当前在线的所有用户的用户名 连接后缓存下来 退出�
 kill username 强制删除某个用户 删除用户命令
 quit 关闭ftp
 */
-void server_cmd(User* user_list)
+void server_cmd(User *user_list)
 {
 	while (1)
 	{
 		char cmd[MAX];
 		printf("> ");
-		fgets(cmd,MAX,stdin);
+		fgets(cmd, MAX, stdin);
 		char c[MAX];
 		char parm[MAX];
-		sscanf(cmd,"%s %s",c,parm);
+		sscanf(cmd, "%s %s", c, parm);
 		if (strcmp(cmd, "count current") == 0)
 		{
 			printf("count current = %d \n", client_current);
@@ -352,13 +342,14 @@ void server_cmd(User* user_list)
 	}
 }
 
-int main(int args,char** argv)
+int main(int args, char **argv)
 {
-	if(args > 1) PORT = atoi(argv[1]);
+	if (args > 1)
+		PORT = atoi(argv[1]);
 	int sockfd, connfd, len;
 	struct sockaddr_in servaddr, cli;
 
-	User* user_list = (User_p)malloc(sizeof(User));
+	User *user_list = (User_p)malloc(sizeof(User));
 
 	// socket create and verification
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -400,21 +391,21 @@ int main(int args,char** argv)
 	while (1)
 	{
 		connfd = accept(sockfd, (SA *)&cli, &len);
-		printf("parent uid = %d \n",getuid());
+		printf("parent uid = %d \n", getuid());
 		User *newUser = NULL;
 		if (connfd > 0 && (newUser = detectUser_Pwd(connfd)))
 		{
 			addUser(user_list, newUser);
 			int child_quit = 0;
-			if(fork() == 0)
+			if (fork() == 0)
 			{
-				prctl(PR_SET_PDEATHSIG,SIGKILL);
+				prctl(PR_SET_PDEATHSIG, SIGKILL);
 				func(newUser);
 				deleteUser(user_list, sockfd);
 				close(sockfd);
 				child_quit = 1;
 			}
-			if(child_quit) 
+			if (child_quit)
 			{
 				client_current--;
 				exit(0);

@@ -43,54 +43,14 @@ typedef enum
   ascii
 } trans_mode;
 
-void client_usage()
-{
-  printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
-}
-
-void send_file(int sockfd, char *fileName)
-{
-  FILE *f = fopen(fileName, "r+");
-  char buff[SIZE];
-  while (fgets(buff, MAX, f) != NULL)
-  {
-    send(sockfd, buff, sizeof(buff), 0);
-    bzero(buff, MAX);
-  }
-  //添加EOF 作为接受完的标志.
-  char c = EOF;
-  send(sockfd, &c, 1, 0);
-  fclose(f);
-
-  puts("send done");
-
-  //等待对方发送完成信息
-  recv(sockfd, buff, MAX, 0);
-  puts(buff);
-}
-
-void recv_file(int sockfd, char *fileName)
-{
-  FILE *f = fopen(fileName, "w+");
-  char buff[MAX];
-  while (1)
-  {
-    int n = recv(sockfd, buff, MAX, 0);
-    printf("recv %d bytes.\n", n);
-    if (n <= 0 || buff[n - 1] == EOF)
-      break;
-    fprintf(f, "%s", buff);
-    bzero(buff, MAX);
-  }
-  fclose(f);
-  puts("get done");
-  strcpy(buff, "put complete");
-  send(sockfd, buff, MAX, 0);
-}
-
 size_t min(size_t a, size_t b)
 {
   return a > b ? b : a;
+}
+
+void client_usage()
+{
+  printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
 }
 
 void send_bfile(int sockfd, char *fileName)
