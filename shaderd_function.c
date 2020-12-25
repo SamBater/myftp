@@ -48,13 +48,13 @@ void client_usage()
   printf("useage:ftpclient <user>:<passwd>@<host>:<port>\n");
 }
 
-void send_file(int sockfd, char *buff, char *fileName)
+void send_file(int sockfd, char *fileName)
 {
   FILE *f = fopen(fileName, "r+");
-  bzero(buff, MAX);
+  char buff[SIZE];
   while (fgets(buff, MAX, f) != NULL)
   {
-    send(sockfd, buff, MAX, 0);
+    send(sockfd, buff, sizeof(buff), 0);
     bzero(buff, MAX);
   }
   //添加EOF 作为接受完的标志.
@@ -69,9 +69,10 @@ void send_file(int sockfd, char *buff, char *fileName)
   puts(buff);
 }
 
-void receive_file(int sockfd, char *buff, char *fileName)
+void recv_file(int sockfd, char *fileName)
 {
   FILE *f = fopen(fileName, "w+");
+  char buff[MAX];
   while (1)
   {
     int n = recv(sockfd, buff, MAX, 0);
@@ -92,7 +93,7 @@ size_t min(size_t a, size_t b)
   return a > b ? b : a;
 }
 
-void send_binaryfile(int sockfd, char *buff, char *fileName)
+void send_bfile(int sockfd, char *fileName)
 {
   FILE *f = fopen(fileName, "rb");
 
@@ -111,18 +112,16 @@ void send_binaryfile(int sockfd, char *buff, char *fileName)
   recv(sockfd, &passed_bytes, sizeof(long long), 0);
 
   fseek(f, 0, SEEK_END);
-  long long fileSize = ftell(f) - passed_bytes;
-  const long long remain_bytes = fileSize;
+  size_t fileSize = ftell(f) - passed_bytes;
+  size_t remain_bytes = fileSize;
   fseek(f, passed_bytes, SEEK_SET);
   if (fileSize == EOF)
-    return 0;
+    return ;
 
-  char size[32];
-  sprintf(size, "%lld", remain_bytes);
-  //事先沟通大小.
-  send(sockfd, size, 31, 0);
+  //告知剩余字节
+  send(sockfd, &remain_bytes, sizeof(size_t), 0);
 
-  long long c = 0;
+  size_t c = 0;
   if (fileSize > 0)
   {
     char buffer[SIZE];
@@ -133,16 +132,16 @@ void send_binaryfile(int sockfd, char *buff, char *fileName)
       send(sockfd, buffer, num, 0);
       fileSize -= num;
       c += num;
-      bzero(buffer, sizeof(buff));
-      printf("\rprocess: (%lld/%lld)", c, remain_bytes);
+      bzero(buffer, sizeof(buffer));
+      printf("\rprocess: (%ld/%ld)", c, remain_bytes);
     } while (fileSize > 0);
   }
-  printf("\nsend total %lld bytes.\n", c);
+  printf("\nsend total %ld bytes.\n", c);
   fclose(f);
-  return 1;
+  return ;
 }
 
-void recive_binaryFile(int sockfd, char *fileName)
+void recv_bfile(int sockfd, char *fileName)
 {
   char st = 1;
   recv(sockfd, &st, 1, 0);
@@ -156,16 +155,15 @@ void recive_binaryFile(int sockfd, char *fileName)
 
   //告知已经下载的bytes.
   fseek(f, 0, SEEK_END);
-  long long passed_bytes = ftell(f);
-  send(sockfd, &passed_bytes, sizeof(long long), 0);
+  size_t passed_bytes = ftell(f);
+  send(sockfd, &passed_bytes, sizeof(size_t), 0);
 
   struct stat s;
   char buff[SIZE];
-  char size[32];
-  recv(sockfd, size, 31, 0);
-  long long fileSize = atoll(size);
-  const long long fs = fileSize;
-  long long c = 0;
+  size_t fileSize;
+  recv(sockfd, &fileSize, sizeof(size_t), 0);
+  size_t fs = fileSize;
+  size_t c = 0;
   do
   {
     if (fileSize <= 0)
@@ -174,8 +172,8 @@ void recive_binaryFile(int sockfd, char *fileName)
     fwrite(buff, num, 1, f);
     fileSize -= num;
     c += num;
-    printf("\rprocess : (%lld/%lld)", c, fs);
+    printf("\rprocess : (%ld/%ld)", c, fs);
   } while (fileSize > 0);
-  printf("\nrecv total %lld bytes.\n", c);
+  printf("\nrecv total %ld bytes.\n", c);
   fclose(f);
 }

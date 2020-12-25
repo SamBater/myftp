@@ -92,9 +92,9 @@ void ftp_cmd(int sockfd, char* buff)
 	else if(strncmp(buff,"get",3) == 0)
 	{
 		if(mode == binary)
-			recive_binaryFile(sockfd,parm);
+			recv_bfile(sockfd,parm);
 		else
-			receive_file(sockfd,buff,parm);
+			recv_file(sockfd,parm);
 	}
 
 	else if(strncmp(buff,"mget",4) == 0)
@@ -109,9 +109,9 @@ void ftp_cmd(int sockfd, char* buff)
 			if(token) 
 			{
 				if(mode == binary)
-					recive_binaryFile(sockfd,token);
+					recv_bfile(sockfd,token);
 				else
-					receive_file(sockfd,buff,token);
+					recv_file(sockfd,token);
 			}
 		}
 	}
@@ -119,7 +119,7 @@ void ftp_cmd(int sockfd, char* buff)
 	else if(strncmp(buff,"put",3) == 0)
 	{		
 		if(mode == binary)
-			send_binaryfile(sockfd,buff,parm);
+			send_bfile(sockfd,buff,parm);
 		else
 			send_file(sockfd,buff,parm);
 	}
@@ -135,7 +135,7 @@ void ftp_cmd(int sockfd, char* buff)
 			if(token) 
 			{				
 				if(mode == binary)
-					send_binaryfile(sockfd,buff,token);
+					send_bfile(sockfd,buff,token);
 				else
 					send_file(sockfd,buff,token);
 			}

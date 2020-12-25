@@ -181,7 +181,10 @@ void reaction(User *user, char *recved_command)
 
 	else if (strcmp(cmd, "put") == 0)
 	{
-		recive_binaryFile(sockfd, parm);
+		if(mode == binary)
+			recv_bfile(sockfd, parm);
+		else
+			recv_file(sockfd,parm);
 	}
 
 	else if (strcmp(cmd, "mput") == 0)
@@ -195,9 +198,9 @@ void reaction(User *user, char *recved_command)
 			if (token)
 			{
 				if (mode == binary)
-					recive_binaryFile(sockfd, token);
+					recv_bfile(sockfd, token);
 				else
-					receive_file(sockfd, recved_command, token);
+					recv_file(sockfd, token);
 			}
 		}
 	}
@@ -207,9 +210,9 @@ void reaction(User *user, char *recved_command)
 	{
 		//发送
 		if (mode == binary)
-			send_binaryfile(sockfd, recved_command, parm);
+			send_bfile(sockfd, parm);
 		else
-			send_file(sockfd, recved_command, parm);
+			send_file(sockfd, parm);
 	}
 	else if (strcmp(cmd, "mget") == 0)
 	{
@@ -223,9 +226,9 @@ void reaction(User *user, char *recved_command)
 			if (token)
 			{
 				if (mode == binary)
-					send_binaryfile(sockfd, recved_command, token);
+					send_bfile(sockfd, token);
 				else
-					send_file(sockfd, recved_command, token);
+					send_file(sockfd, token);
 			}
 		}
 	}
@@ -311,8 +314,7 @@ void server_cmd(User* user_list)
 	{
 		char cmd[MAX];
 		printf("> ");
-		//fgets(cmd,MAX,stdin);
-		gets(cmd);
+		fgets(cmd,MAX,stdin);
 		char c[MAX];
 		char parm[MAX];
 		sscanf(cmd,"%s %s",c,parm);
@@ -403,7 +405,6 @@ int main(int args,char** argv)
 		if (connfd > 0 && (newUser = detectUser_Pwd(connfd)))
 		{
 			addUser(user_list, newUser);
-			printAllUser(user_list);
 			int child_quit = 0;
 			if(fork() == 0)
 			{
