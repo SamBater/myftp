@@ -70,7 +70,6 @@ void quit(User_p root)
 /// @return 0 - password is correct, otherwise no need root permision
 int CheckPassword(const char *user, const char *password)
 {
-	return 0;
 	struct passwd *passwdEntry = getpwnam(user);
 	if (!passwdEntry)
 	{
