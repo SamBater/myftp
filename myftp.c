@@ -61,7 +61,7 @@ void ftp_cmd(int sockfd, char *buff)
 		mode = ascii;
 	}
 
-	else if(strcmp(cmd,"mdir") == 0 || strcmp(cmd,"rmdir") == 0 ||  strcmp(cmd,"cd") ==0 )
+	else if(strcmp(cmd,"mkdir") == 0 || strcmp(cmd,"rmkdir") == 0 ||  strcmp(cmd,"cd") ==0 )
 	{
 		//无需回显信息
 	}

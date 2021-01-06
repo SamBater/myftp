@@ -118,12 +118,12 @@ void reaction(User *user, char *recved_command)
 	}
 
 	// 创建/删除目录（lmkdir/lrmdir）、
-	else if (strncmp(cmd, "mdir", 5) == 0)
+	else if (strncmp(cmd, "mkdir", 5) == 0)
 	{
 		mkdir(parm, 755);
 	}
 
-	else if (strcmp(cmd, "rmdir") == 0)
+	else if (strcmp(cmd, "rmkdir") == 0)
 	{
 		char tmp[MAX];
 		strcpy(tmp, recved_command);
