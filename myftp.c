@@ -50,8 +50,6 @@ void ftp_cmd(int sockfd, char *buff)
 	char stat;
 	char cmd[MAX];
 	char parm[MAX];
-	bzero(cmd, MAX);
-	bzero(parm, MAX);
 	sscanf(buff, "%s %s", cmd, parm);
 	if (strncmp(cmd, "binary",6) == 0)
 	{
@@ -68,9 +66,9 @@ void ftp_cmd(int sockfd, char *buff)
 		//无需回显信息
 	}
 
-	else if(strcmp(cmd,"pwd"))
+	else if(strcmp(cmd,"pwd") ==0)
 	{
-		recv(sockfd,buff,sizeof(buff),0);
+		recv(sockfd,buff,MAX,0);
 		puts(buff);
 	}
 
@@ -96,7 +94,7 @@ void ftp_cmd(int sockfd, char *buff)
 	}
 
 	//显示当前路径（lpwd)
-	else if (strcmp(cmd, "lpwd") == 0)
+	else if (strncmp(buff, "lpwd",4) == 0)
 	{
 		if (getcwd(cmd, MAX) != NULL)
 		{

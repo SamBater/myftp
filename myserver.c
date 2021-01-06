@@ -102,23 +102,23 @@ void reaction(User *user, char *recved_command)
 	char stat;
 	int n = sscanf(recved_command, "%s %s", cmd, parm);
 
-	if(recved_command[0] == 'l')
+	if(strcmp(cmd,"lpwd") == 0)
 	{
 		//已在客户端处理
 	}
 
-	if (strcmp(cmd, "binary"))
+	else if (strcmp(cmd, "binary") == 0)
 	{
 		mode = binary;
 	}
 
-	else if (strcmp(cmd, "ascii"))
+	else if (strcmp(cmd, "ascii") == 0)
 	{
 		mode = ascii;
 	}
 
 	// 创建/删除目录（lmkdir/lrmdir）、
-	if (strncmp(cmd, "mdir", 5) == 0)
+	else if (strncmp(cmd, "mdir", 5) == 0)
 	{
 		mkdir(parm, 755);
 	}
