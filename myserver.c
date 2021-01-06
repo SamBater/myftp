@@ -325,18 +325,17 @@ void server_cmd(User *user_list)
 		}
 		else if (strcmp(c, "kill") == 0)
 		{
-			// TODO : 删除用户
-			// for(User* tmp = user_list;tmp;tmp = tmp->next)
-			// {
-			// 	User* next = tmp->next;
-			// 	if(next && strcmp(parm,next->userName) == 0)
-			// 	{
-			// 		tmp->next = next->next;
-			// 		close(next->sockfd);
-			// 		free(next);
-			// 		break;
-			// 	}
-			// }
+			for(User* tmp = user_list;tmp;tmp = tmp->next)
+			{
+				User* next = tmp->next;
+				if(next && strcmp(parm,next->userName) == 0)
+				{
+					tmp->next = next->next;
+					close(next->sockfd);
+					free(next);
+					break;
+				}
+			}
 		}
 		else if (strcmp(c, "quit") == 0)
 		{
