@@ -102,7 +102,7 @@ void reaction(User *user, char *recved_command)
 	char stat;
 	int n = sscanf(recved_command, "%s %s", cmd, parm);
 
-	if(strcmp(cmd,"lpwd") == 0)
+	if(recved_command[0] == 'l')
 	{
 		//已在客户端处理
 	}
@@ -167,7 +167,16 @@ void reaction(User *user, char *recved_command)
 	//   查看当前目录下的所有文件（dir）、
 	else if (strcmp(cmd, "dir") == 0)
 	{
-
+		struct dirent *myfile;
+		DIR *mydir = opendir(".");
+		while((myfile = readdir(mydir)) != NULL)
+		{
+			char fileName[MAX];
+			sprintf(fileName,"%s",myfile->d_name);
+			send(sockfd,fileName,MAX,0);
+		}
+		char c = -100;
+		send(sockfd,&c,1,0);
 	}
 	// 	   上传单个/多个文件（put/mput）、
 

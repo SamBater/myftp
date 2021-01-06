@@ -66,6 +66,17 @@ void ftp_cmd(int sockfd, char *buff)
 		//无需回显信息
 	}
 
+	else if(strncmp(buff,"ls",2) == 0)
+	{
+		struct dirent *myfile;
+		DIR *mydir = opendir(".");
+		while((myfile = readdir(mydir)) != NULL)
+		{
+			printf("%s\t",myfile->d_name);
+		}
+		printf("\n");
+	}
+
 	else if(strcmp(cmd,"pwd") ==0)
 	{
 		recv(sockfd,buff,MAX,0);
