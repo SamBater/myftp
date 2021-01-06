@@ -1,6 +1,6 @@
 user = sam
 passwd = w1ww11w
-ip = 0.0.0.0
+ip = 127.0.0.1
 port = 8080
 server : myserver shaderd_function.c
 	sudo ./myserver $(port) ;

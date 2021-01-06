@@ -12,11 +12,10 @@
 #include <sys/prctl.h>
 #include <signal.h>
 #include <sys/mman.h>
+#include "shaderd_function.c"
 #define MAX 255
 int PORT = 8080;
 #define SA struct sockaddr
-
-#include "shaderd_function.c"
 
 static int client_count_so_far = 0; //系统访客总数
 static int client_current = 0;		//活动用户总数
@@ -103,6 +102,11 @@ void reaction(User *user, char *recved_command)
 	char stat;
 	int n = sscanf(recved_command, "%s %s", cmd, parm);
 
+	if(recved_command[0] == 'l')
+	{
+		//已在客户端处理
+	}
+
 	if (strcmp(cmd, "binary"))
 	{
 		mode = binary;
@@ -114,12 +118,12 @@ void reaction(User *user, char *recved_command)
 	}
 
 	// 创建/删除目录（lmkdir/lrmdir）、
-	if (strncmp(cmd, "lmdir", 5) == 0)
+	if (strncmp(cmd, "mdir", 5) == 0)
 	{
 		mkdir(parm, 755);
 	}
 
-	else if (strcmp(cmd, "lrmdir") == 0)
+	else if (strcmp(cmd, "rmdir") == 0)
 	{
 		char tmp[MAX];
 		strcpy(tmp, recved_command);
@@ -135,7 +139,7 @@ void reaction(User *user, char *recved_command)
 	}
 
 	//显示当前路径（lpwd)
-	else if (strcmp(cmd, "lpwd") == 0)
+	else if (strcmp(cmd, "pwd") == 0)
 	{
 		if (getcwd(recved_command, MAX) != NULL)
 		{
@@ -148,7 +152,7 @@ void reaction(User *user, char *recved_command)
 		send(sockfd, recved_command, MAX, 0);
 	}
 	//   切换目录（lcd）、
-	else if (strcmp(cmd, "lcd") == 0)
+	else if (strcmp(cmd, "cd") == 0)
 	{
 		if (chdir(parm) == 0)
 		{
@@ -158,21 +162,12 @@ void reaction(User *user, char *recved_command)
 		{
 			strncpy(recved_command, "no such direction", MAX);
 		}
-		send(sockfd, recved_command, MAX, 0);
+		//send(sockfd, recved_command, MAX, 0);
 	}
 	//   查看当前目录下的所有文件（dir）、
 	else if (strcmp(cmd, "dir") == 0)
 	{
-		struct dirent *myfile;
-		DIR *mydir = opendir(".");
-		while ((myfile = readdir(mydir)) != NULL)
-		{
-			char buf[255];
-			sprintf(buf, "%s", myfile->d_name);
-			send(sockfd, buf, MAX, 0);
-		}
-		char c = -100;
-		send(sockfd, &c, 1, 0);
+
 	}
 	// 	   上传单个/多个文件（put/mput）、
 

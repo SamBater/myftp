@@ -63,14 +63,63 @@ void ftp_cmd(int sockfd, char *buff)
 		mode = ascii;
 	}
 
-	else if (strncmp(cmd, "lmdir", 5) == 0)
+	else if(strcmp(cmd,"mdir") == 0 || strcmp(cmd,"rmdir") == 0 ||  strcmp(cmd,"cd") ==0 )
 	{
-		//在main loop中已发送
+		//无需回显信息
 	}
 
-	else if (strncmp(cmd, "lrmdir", 6) == 0)
+	else if(strcmp(cmd,"pwd"))
 	{
-		//在Main loop中已发送.
+		recv(sockfd,buff,sizeof(buff),0);
+		puts(buff);
+	}
+
+// 创建/删除目录（lmkdir/lrmdir）、
+	else if (strncmp(cmd, "lmdir", 5) == 0)
+	{
+		mkdir(parm, 755);
+	}
+
+	else if (strcmp(cmd, "lrmdir") == 0)
+	{
+		char tmp[MAX];
+		strcpy(tmp, cmd);
+		char *token = strtok(tmp, " ");
+		while (token != NULL)
+		{
+			token = strtok(NULL, " ");
+			if (token)
+			{
+				mkdir(token, 755);
+			}
+		}
+	}
+
+	//显示当前路径（lpwd)
+	else if (strcmp(cmd, "lpwd") == 0)
+	{
+		if (getcwd(cmd, MAX) != NULL)
+		{
+			
+		}
+		else
+		{
+			strncpy(cmd, "no such directory.", MAX);
+		}
+		puts(cmd);
+	}
+	//   切换目录（lcd）、
+	else if (strcmp(cmd, "lcd") == 0)
+	{
+		if (chdir(parm) == 0)
+		{
+			sprintf(cmd, "change to %s", parm);
+		}
+		else
+		{
+			strncpy(cmd, "no such direction", MAX);
+		}
+		puts(cmd);
 	}
 
 	else if (strncmp(cmd, "dir",3) == 0)
